@@ -87,7 +87,10 @@ def build_server() -> Server:
             return tool_impl.get_incident_context(ctx, store, incident_id)
         if name == "get_error_evidence":
             return tool_impl.get_error_evidence(
-                ctx, store, gateway, incident_id,
+                ctx,
+                store,
+                gateway,
+                incident_id,
                 window_minutes=arguments.get("window_minutes", 15),
                 limit=arguments.get("limit", 50),
             )
@@ -119,7 +122,11 @@ def build_server() -> Server:
                 "evidence": [],
                 "truncated": False,
                 "warnings": [],
-                "error": {"code": "TIMEOUT", "message": f"{name} exceeded {TOOL_CALL_TIMEOUT_SECONDS}s", "retryable": True},
+                "error": {
+                    "code": "TIMEOUT",
+                    "message": f"{name} exceeded {TOOL_CALL_TIMEOUT_SECONDS}s",
+                    "retryable": True,
+                },
             }
             return types.CallToolResult(
                 content=[types.TextContent(type="text", text=json.dumps(payload))],

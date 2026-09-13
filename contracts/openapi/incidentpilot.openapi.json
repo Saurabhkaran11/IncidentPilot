@@ -1,0 +1,1846 @@
+{
+  "components": {
+    "schemas": {
+      "AcceptedResponse": {
+        "additionalProperties": false,
+        "description": "The common 202 envelope (API contract, \"Shared conventions\").",
+        "properties": {
+          "approval_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Id"
+          },
+          "incident_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Incident Id"
+          },
+          "operation_id": {
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "resource_id": {
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "status": {
+            "const": "accepted",
+            "default": "accepted",
+            "title": "Status",
+            "type": "string"
+          },
+          "status_url": {
+            "title": "Status Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resource_id",
+          "operation_id",
+          "status_url"
+        ],
+        "title": "AcceptedResponse",
+        "type": "object"
+      },
+      "ApplicationSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "app_id": {
+            "title": "App Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "app_id",
+          "label"
+        ],
+        "title": "ApplicationSummary",
+        "type": "object"
+      },
+      "Assessment": {
+        "enum": [
+          "supported",
+          "insufficient_evidence"
+        ],
+        "title": "Assessment",
+        "type": "string"
+      },
+      "CapabilitiesResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "agent_mode": {
+            "title": "Agent Mode",
+            "type": "string"
+          },
+          "applications": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicationSummary"
+            },
+            "title": "Applications",
+            "type": "array"
+          },
+          "features": {
+            "$ref": "#/components/schemas/Features"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/Mode"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode",
+          "agent_mode",
+          "features",
+          "applications"
+        ],
+        "title": "CapabilitiesResponse",
+        "type": "object"
+      },
+      "CreateDemoRequestRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "demo_run_id": {
+            "title": "Demo Run Id",
+            "type": "string"
+          },
+          "document": {
+            "$ref": "#/components/schemas/DemoDocumentIn"
+          }
+        },
+        "required": [
+          "demo_run_id",
+          "document"
+        ],
+        "title": "CreateDemoRequestRequest",
+        "type": "object"
+      },
+      "CreateDemoRunRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "app_id": {
+            "title": "App Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "app_id"
+        ],
+        "title": "CreateDemoRunRequest",
+        "type": "object"
+      },
+      "CreateDemoRunResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "app_id": {
+            "title": "App Id",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "demo_run_id": {
+            "title": "Demo Run Id",
+            "type": "string"
+          },
+          "max_requests": {
+            "title": "Max Requests",
+            "type": "integer"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/Mode"
+          }
+        },
+        "required": [
+          "demo_run_id",
+          "app_id",
+          "created_at",
+          "mode",
+          "max_requests"
+        ],
+        "title": "CreateDemoRunResponse",
+        "type": "object"
+      },
+      "Decision": {
+        "enum": [
+          "approve",
+          "reject"
+        ],
+        "title": "Decision",
+        "type": "string"
+      },
+      "DecisionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "$ref": "#/components/schemas/Decision"
+          },
+          "expected_incident_version": {
+            "minimum": 1.0,
+            "title": "Expected Incident Version",
+            "type": "integer"
+          },
+          "plan_digest": {
+            "title": "Plan Digest",
+            "type": "string"
+          },
+          "plan_id": {
+            "title": "Plan Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plan_id",
+          "plan_digest",
+          "expected_incident_version",
+          "decision"
+        ],
+        "title": "DecisionRequest",
+        "type": "object"
+      },
+      "DemoDocumentIn": {
+        "additionalProperties": false,
+        "properties": {
+          "document_type": {
+            "enum": [
+              "invoice",
+              "contract",
+              "receipt",
+              "report"
+            ],
+            "title": "Document Type",
+            "type": "string"
+          },
+          "fixture_id": {
+            "enum": [
+              "invoice-example-a",
+              "invoice-example-b",
+              "invoice-example-c",
+              "contract-example-a",
+              "report-example-a"
+            ],
+            "title": "Fixture Id",
+            "type": "string"
+          },
+          "page_count": {
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Page Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "fixture_id",
+          "document_type",
+          "page_count"
+        ],
+        "title": "DemoDocumentIn",
+        "type": "object"
+      },
+      "DemoRequestResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "demo_run_id": {
+            "title": "Demo Run Id",
+            "type": "string"
+          },
+          "last_error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error Code"
+          },
+          "payload_sha256": {
+            "title": "Payload Sha256",
+            "type": "string"
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          },
+          "result_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Id"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "demo_run_id",
+          "status",
+          "payload_sha256",
+          "attempts",
+          "last_error_code",
+          "result_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "DemoRequestResponse",
+        "type": "object"
+      },
+      "DiagnosisSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "agent_mode": {
+            "title": "Agent Mode",
+            "type": "string"
+          },
+          "assessment": {
+            "$ref": "#/components/schemas/Assessment"
+          },
+          "duration_ms": {
+            "title": "Duration Ms",
+            "type": "integer"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "hypotheses": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Hypotheses",
+            "type": "array"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "recommended_action": {
+            "title": "Recommended Action",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "tool_call_count": {
+            "title": "Tool Call Count",
+            "type": "integer"
+          },
+          "unknowns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unknowns",
+            "type": "array"
+          }
+        },
+        "required": [
+          "assessment",
+          "summary",
+          "evidence_ids",
+          "unknowns",
+          "recommended_action",
+          "hypotheses",
+          "agent_mode",
+          "model_id",
+          "tool_call_count",
+          "duration_ms"
+        ],
+        "title": "DiagnosisSummary",
+        "type": "object"
+      },
+      "EventOut": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "additionalProperties": true,
+            "title": "Data",
+            "type": "object"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "occurred_at": {
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "sequence": {
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sequence",
+          "event_id",
+          "type",
+          "occurred_at",
+          "data"
+        ],
+        "title": "EventOut",
+        "type": "object"
+      },
+      "EventsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/EventOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "last_sequence": {
+            "title": "Last Sequence",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "last_sequence",
+          "has_more"
+        ],
+        "title": "EventsResponse",
+        "type": "object"
+      },
+      "EvidenceResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence_id": {
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "incident_id": {
+            "title": "Incident Id",
+            "type": "string"
+          },
+          "observed_at": {
+            "title": "Observed At",
+            "type": "string"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          },
+          "payload_sha256": {
+            "title": "Payload Sha256",
+            "type": "string"
+          },
+          "retrieved_at": {
+            "title": "Retrieved At",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "source_ref": {
+            "title": "Source Ref",
+            "type": "string"
+          },
+          "source_type": {
+            "title": "Source Type",
+            "type": "string"
+          },
+          "truncated": {
+            "title": "Truncated",
+            "type": "boolean"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "evidence_id",
+          "incident_id",
+          "run_id",
+          "source_type",
+          "source_ref",
+          "observed_at",
+          "retrieved_at",
+          "payload_sha256",
+          "payload",
+          "truncated",
+          "warnings"
+        ],
+        "title": "EvidenceResponse",
+        "type": "object"
+      },
+      "Features": {
+        "additionalProperties": false,
+        "properties": {
+          "agentcore_runtime": {
+            "title": "Agentcore Runtime",
+            "type": "boolean"
+          },
+          "alias_rollback": {
+            "title": "Alias Rollback",
+            "type": "boolean"
+          },
+          "bounded_replay": {
+            "title": "Bounded Replay",
+            "type": "boolean"
+          },
+          "mcp_evidence": {
+            "title": "Mcp Evidence",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "mcp_evidence",
+          "alias_rollback",
+          "bounded_replay",
+          "agentcore_runtime"
+        ],
+        "title": "Features",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "ImpactOut": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_requests": {
+            "title": "Completed Requests",
+            "type": "integer"
+          },
+          "failed_requests": {
+            "title": "Failed Requests",
+            "type": "integer"
+          },
+          "first_failure_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Failure At"
+          },
+          "service": {
+            "title": "Service",
+            "type": "string"
+          }
+        },
+        "required": [
+          "failed_requests",
+          "completed_requests",
+          "first_failure_at",
+          "service"
+        ],
+        "title": "ImpactOut",
+        "type": "object"
+      },
+      "IncidentEventIn": {
+        "additionalProperties": false,
+        "properties": {
+          "app_id": {
+            "title": "App Id",
+            "type": "string"
+          },
+          "demo_run_id": {
+            "title": "Demo Run Id",
+            "type": "string"
+          },
+          "evidence_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Ref"
+          },
+          "failure_kind": {
+            "const": "processor_invocation_failed",
+            "title": "Failure Kind",
+            "type": "string"
+          },
+          "observed_at": {
+            "title": "Observed At",
+            "type": "string"
+          },
+          "request_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10,
+            "title": "Request Ids",
+            "type": "array"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "source_event_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Source Event Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_event_id",
+          "source",
+          "app_id",
+          "demo_run_id",
+          "observed_at",
+          "failure_kind",
+          "request_ids"
+        ],
+        "title": "IncidentEventIn",
+        "type": "object"
+      },
+      "IncidentListItem": {
+        "additionalProperties": false,
+        "properties": {
+          "app_id": {
+            "title": "App Id",
+            "type": "string"
+          },
+          "failed_requests": {
+            "title": "Failed Requests",
+            "type": "integer"
+          },
+          "incident_id": {
+            "title": "Incident Id",
+            "type": "string"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/Mode"
+          },
+          "state": {
+            "$ref": "#/components/schemas/IncidentState"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "incident_id",
+          "app_id",
+          "state",
+          "mode",
+          "failed_requests",
+          "updated_at"
+        ],
+        "title": "IncidentListItem",
+        "type": "object"
+      },
+      "IncidentListResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/IncidentListItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "IncidentListResponse",
+        "type": "object"
+      },
+      "IncidentResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "active_operation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Operation Id"
+          },
+          "active_plan_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Plan Id"
+          },
+          "app_id": {
+            "title": "App Id",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "demo_run_id": {
+            "title": "Demo Run Id",
+            "type": "string"
+          },
+          "diagnosis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DiagnosisSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "impact": {
+            "$ref": "#/components/schemas/ImpactOut"
+          },
+          "incident_id": {
+            "title": "Incident Id",
+            "type": "string"
+          },
+          "latest_receipt_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Receipt Id"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/Mode"
+          },
+          "state": {
+            "$ref": "#/components/schemas/IncidentState"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "incident_id",
+          "version",
+          "app_id",
+          "demo_run_id",
+          "state",
+          "mode",
+          "impact",
+          "diagnosis",
+          "active_plan_id",
+          "active_operation_id",
+          "latest_receipt_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "IncidentResponse",
+        "type": "object"
+      },
+      "IncidentState": {
+        "enum": [
+          "detected",
+          "investigating",
+          "needs_information",
+          "awaiting_approval",
+          "rejected",
+          "applying",
+          "verifying",
+          "replaying",
+          "recovered",
+          "service_restored_pending_requests",
+          "needs_attention"
+        ],
+        "title": "IncidentState",
+        "type": "string"
+      },
+      "Mode": {
+        "enum": [
+          "fixture",
+          "aws_live"
+        ],
+        "title": "Mode",
+        "type": "string"
+      },
+      "OperationPhase": {
+        "enum": [
+          "validate",
+          "apply",
+          "verify",
+          "replay",
+          "receipt"
+        ],
+        "title": "OperationPhase",
+        "type": "string"
+      },
+      "OperationResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "incident_id": {
+            "title": "Incident Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "operation_id": {
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "phase": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OperationPhase"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "$ref": "#/components/schemas/OperationStatus"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id",
+          "kind",
+          "incident_id",
+          "status",
+          "phase",
+          "created_at",
+          "updated_at",
+          "started_at",
+          "finished_at",
+          "error",
+          "result"
+        ],
+        "title": "OperationResponse",
+        "type": "object"
+      },
+      "OperationStatus": {
+        "enum": [
+          "queued",
+          "running",
+          "succeeded",
+          "failed",
+          "needs_attention"
+        ],
+        "title": "OperationStatus",
+        "type": "string"
+      },
+      "PlanResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "plan": {
+            "additionalProperties": true,
+            "title": "Plan",
+            "type": "object"
+          },
+          "plan_digest": {
+            "title": "Plan Digest",
+            "type": "string"
+          },
+          "presentation": {
+            "additionalProperties": true,
+            "title": "Presentation",
+            "type": "object"
+          }
+        },
+        "required": [
+          "plan",
+          "plan_digest",
+          "presentation"
+        ],
+        "title": "PlanResponse",
+        "type": "object"
+      },
+      "StartInvestigationRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_incident_version": {
+            "minimum": 1.0,
+            "title": "Expected Incident Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "expected_incident_version"
+        ],
+        "title": "StartInvestigationRequest",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Investigate a failed AWS request-processing workflow, approve a bounded Lambda alias rollback, and verify recovery.",
+    "title": "IncidentPilot control API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/healthz": {
+      "get": {
+        "description": "Process readiness only -- no configuration details, no auth.",
+        "operationId": "healthz_healthz_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Healthz Healthz Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Healthz",
+        "tags": [
+          "meta"
+        ]
+      }
+    },
+    "/v1/capabilities": {
+      "get": {
+        "description": "What this deployment actually does -- not what it aspires to.",
+        "operationId": "capabilities_v1_capabilities_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilitiesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Capabilities",
+        "tags": [
+          "meta"
+        ]
+      }
+    },
+    "/v1/demo/requests": {
+      "post": {
+        "description": "Persist the request, then queue its processing attempt.\n\nOrder matters: the input is durable *before* anything tries to process\nit, so a failed attempt leaves a recoverable request rather than a lost\none (build brief section 5, step 3).",
+        "operationId": "submit_demo_request_v1_demo_requests_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDemoRequestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit Demo Request",
+        "tags": [
+          "demo"
+        ]
+      }
+    },
+    "/v1/demo/requests/{request_id}": {
+      "get": {
+        "operationId": "get_demo_request_v1_demo_requests__request_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "schema": {
+              "title": "Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoRequestResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Demo Request",
+        "tags": [
+          "demo"
+        ]
+      }
+    },
+    "/v1/demo/runs": {
+      "post": {
+        "operationId": "create_demo_run_v1_demo_runs_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDemoRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateDemoRunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Demo Run",
+        "tags": [
+          "demo"
+        ]
+      }
+    },
+    "/v1/incidents": {
+      "get": {
+        "operationId": "list_incidents_v1_incidents_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Incidents",
+        "tags": [
+          "incidents"
+        ]
+      },
+      "post": {
+        "description": "Normalize and deduplicate one failure event into an incident.\n\nTwo independent dedup layers: ``source_event_id`` stops exact\nredelivery, and an existing non-terminal incident for the same\napp/run/deployment fingerprint absorbs near-simultaneous failures\ninstead of opening a second investigation.",
+        "operationId": "open_incident_v1_incidents_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IncidentEventIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Open Incident",
+        "tags": [
+          "incidents"
+        ]
+      }
+    },
+    "/v1/incidents/{incident_id}": {
+      "get": {
+        "operationId": "get_incident_v1_incidents__incident_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "title": "Incident Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Incident",
+        "tags": [
+          "incidents"
+        ]
+      }
+    },
+    "/v1/incidents/{incident_id}/decisions": {
+      "post": {
+        "description": "Approve or reject a plan.\n\nOn approval this writes the Approval *and* the execution operation\ntogether, then returns 202. It does not touch AWS: the executor\nre-validates the digest, expiry, and the live alias revision immediately\nbefore mutating (build brief section 10).",
+        "operationId": "decide_v1_incidents__incident_id__decisions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "title": "Incident Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Decide V1 Incidents  Incident Id  Decisions Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Decide",
+        "tags": [
+          "recovery"
+        ]
+      }
+    },
+    "/v1/incidents/{incident_id}/events": {
+      "get": {
+        "operationId": "list_events_v1_incidents__incident_id__events_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "title": "Incident Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after_sequence",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "After Sequence",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Events",
+        "tags": [
+          "incidents"
+        ]
+      }
+    },
+    "/v1/incidents/{incident_id}/evidence/{evidence_id}": {
+      "get": {
+        "operationId": "get_evidence_v1_incidents__incident_id__evidence__evidence_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "title": "Incident Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "evidence_id",
+            "required": true,
+            "schema": {
+              "title": "Evidence Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Evidence",
+        "tags": [
+          "incidents"
+        ]
+      }
+    },
+    "/v1/incidents/{incident_id}/investigations": {
+      "post": {
+        "description": "Queue a re-investigation. Invalidates any unexecuted plan.",
+        "operationId": "start_investigation_v1_incidents__incident_id__investigations_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "title": "Incident Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartInvestigationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Investigation",
+        "tags": [
+          "incidents"
+        ]
+      }
+    },
+    "/v1/incidents/{incident_id}/plans/{plan_id}": {
+      "get": {
+        "operationId": "get_plan_v1_incidents__incident_id__plans__plan_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "title": "Incident Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "plan_id",
+            "required": true,
+            "schema": {
+              "title": "Plan Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Plan",
+        "tags": [
+          "recovery"
+        ]
+      }
+    },
+    "/v1/incidents/{incident_id}/receipt": {
+      "get": {
+        "operationId": "get_receipt_v1_incidents__incident_id__receipt_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "title": "Incident Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "json",
+              "pattern": "^(json|markdown)$",
+              "title": "Format",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Receipt",
+        "tags": [
+          "recovery"
+        ]
+      }
+    },
+    "/v1/operations/{operation_id}": {
+      "get": {
+        "operationId": "get_operation_v1_operations__operation_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "operation_id",
+            "required": true,
+            "schema": {
+              "title": "Operation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Operation",
+        "tags": [
+          "recovery"
+        ]
+      }
+    }
+  }
+}

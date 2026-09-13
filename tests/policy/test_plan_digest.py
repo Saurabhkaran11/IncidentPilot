@@ -49,12 +49,8 @@ DIGEST_RELEVANT_CHANGES = {
     "good_version_fingerprint": {"good_version_fingerprint": "c" * 64},
     "verification_profile": {"verification_profile": "document-result-v2"},
     "expires_at": {"expires_at": datetime(2026, 9, 13, 12, 30, 0, tzinfo=UTC)},
-    "replay_request_id": {
-        "replay_requests": [ReplayRequestRef(request_id="docreq_two", payload_sha256="b" * 64)]
-    },
-    "replay_payload_hash": {
-        "replay_requests": [ReplayRequestRef(request_id="docreq_one", payload_sha256="d" * 64)]
-    },
+    "replay_request_id": {"replay_requests": [ReplayRequestRef(request_id="docreq_two", payload_sha256="b" * 64)]},
+    "replay_payload_hash": {"replay_requests": [ReplayRequestRef(request_id="docreq_one", payload_sha256="d" * 64)]},
 }
 
 NON_DIGEST_CHANGES = {

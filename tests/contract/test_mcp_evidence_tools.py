@@ -28,18 +28,12 @@ def call(tool_name: str, world, incident_id: str) -> dict:
     ctx = world.run_context()
     dispatch = {
         "get_incident_context": lambda: evidence_tools.get_incident_context(ctx, world.store, incident_id),
-        "get_error_evidence": lambda: evidence_tools.get_error_evidence(
-            ctx, world.store, world.gateway, incident_id
-        ),
-        "get_release_diff": lambda: evidence_tools.get_release_diff(
-            ctx, world.store, world.gateway, incident_id
-        ),
+        "get_error_evidence": lambda: evidence_tools.get_error_evidence(ctx, world.store, world.gateway, incident_id),
+        "get_release_diff": lambda: evidence_tools.get_release_diff(ctx, world.store, world.gateway, incident_id),
         "get_pending_request_summary": lambda: evidence_tools.get_pending_request_summary(
             ctx, world.store, incident_id
         ),
-        "get_runbook": lambda: evidence_tools.get_runbook(
-            ctx, world.store, incident_id, "document-alias-rollback-v1"
-        ),
+        "get_runbook": lambda: evidence_tools.get_runbook(ctx, world.store, incident_id, "document-alias-rollback-v1"),
     }
     return dispatch[tool_name]()
 

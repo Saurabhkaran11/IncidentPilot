@@ -34,9 +34,7 @@ MAX_DURATION_SECONDS = 90
 
 #: Verify this against Bedrock model access actually granted in the target
 #: account/region before a live demo -- see docs/decisions/0008-model-selection.md.
-DEFAULT_MODEL_ID = os.environ.get(
-    "INCIDENTPILOT_BEDROCK_MODEL_ID", "anthropic.claude-3-5-sonnet-20241022-v2:0"
-)
+DEFAULT_MODEL_ID = os.environ.get("INCIDENTPILOT_BEDROCK_MODEL_ID", "anthropic.claude-3-5-sonnet-20241022-v2:0")
 
 
 class InvestigatorError(RuntimeError):
@@ -132,9 +130,7 @@ def investigate(ctx: RunContext, incident_id: str, *, model_id: str | None = Non
                 ) from second_exc
 
         if diagnosis.incident_id != incident_id:
-            raise InvestigatorError(
-                f"model returned incident_id {diagnosis.incident_id!r}, expected {incident_id!r}"
-            )
+            raise InvestigatorError(f"model returned incident_id {diagnosis.incident_id!r}, expected {incident_id!r}")
 
     input_tokens, output_tokens = _extract_usage(result)
     return InvestigationResult(

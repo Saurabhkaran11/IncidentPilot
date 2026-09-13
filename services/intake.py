@@ -88,23 +88,37 @@ def open_or_attach_incident(
             created_at=now,
             updated_at=now,
             impact=ImpactSummary(
-                failed_requests=failed, completed_requests=completed,
-                first_failure_at=observed_at, mode=mode,
+                failed_requests=failed,
+                completed_requests=completed,
+                first_failure_at=observed_at,
+                mode=mode,
             ),
         )
         store.create_incident(incident)
-        store.append_event(incident.incident_id, EventType.INCIDENT_DETECTED.value, {
-            "source": source, "failure_kind": failure_kind, "request_ids": request_ids,
-        })
+        store.append_event(
+            incident.incident_id,
+            EventType.INCIDENT_DETECTED.value,
+            {
+                "source": source,
+                "failure_kind": failure_kind,
+                "request_ids": request_ids,
+            },
+        )
     else:
         # Attach: refresh the impact counts so the operator sees all three
         # failures, not just the one that opened the incident.
         store.update_incident(
-            incident.incident_id, incident.version,
-            lambda inc: inc.model_copy(update={
-                "impact": inc.impact.model_copy(update={"failed_requests": failed, "completed_requests": completed}),
-                "version": inc.version + 1, "updated_at": now,
-            }),
+            incident.incident_id,
+            incident.version,
+            lambda inc: inc.model_copy(
+                update={
+                    "impact": inc.impact.model_copy(
+                        update={"failed_requests": failed, "completed_requests": completed}
+                    ),
+                    "version": inc.version + 1,
+                    "updated_at": now,
+                }
+            ),
         )
         incident = store.get_incident(incident.incident_id)
 
@@ -137,10 +151,15 @@ def queue_investigation(store: ControlPlaneStore, incident_id: str) -> str:
     )
     current = store.get_incident(incident_id)
     store.update_incident(
-        incident_id, current.version,
-        lambda inc: inc.model_copy(update={
-            "active_operation_id": operation_id, "version": inc.version + 1, "updated_at": now,
-        }),
+        incident_id,
+        current.version,
+        lambda inc: inc.model_copy(
+            update={
+                "active_operation_id": operation_id,
+                "version": inc.version + 1,
+                "updated_at": now,
+            }
+        ),
     )
     apply_transition(store, incident_id, IncidentState.INVESTIGATING)
     return operation_id

@@ -118,9 +118,7 @@ class ControlPlaneStore(ABC):
     def list_demo_requests(self, demo_run_id: str) -> list[DemoRequest]: ...
 
     @abstractmethod
-    def update_demo_request(
-        self, request_id: str, mutator: Callable[[DemoRequest], DemoRequest]
-    ) -> DemoRequest:
+    def update_demo_request(self, request_id: str, mutator: Callable[[DemoRequest], DemoRequest]) -> DemoRequest:
         """Read-modify-write inside a transaction; ``mutator`` must be pure."""
 
     # -- incidents --
@@ -187,9 +185,7 @@ class ControlPlaneStore(ABC):
     def get_operation(self, operation_id: str) -> Operation | None: ...
 
     @abstractmethod
-    def update_operation(
-        self, operation_id: str, mutator: Callable[[Operation], Operation]
-    ) -> Operation: ...
+    def update_operation(self, operation_id: str, mutator: Callable[[Operation], Operation]) -> Operation: ...
 
     @abstractmethod
     def list_operations_by_status(self, kind: str, status: str, limit: int) -> list[Operation]:

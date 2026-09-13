@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
 from packages.domain.config import AppConfig, DeploymentManifestEntry
+from packages.domain.enums import RecommendedAction
 from packages.domain.ids import new_id
 from packages.domain.plan import (
     DEFAULT_PLAN_TTL_SECONDS,
@@ -27,7 +28,6 @@ from packages.domain.plan import (
     RecoveryPlan,
     ReplayRequestRef,
 )
-from packages.domain.enums import RecommendedAction
 
 
 @dataclass(frozen=True)
@@ -76,23 +76,31 @@ def evaluate(
         return PlanPolicyRejection("ALREADY_ON_KNOWN_GOOD", "The alias already points at the known-good version.")
 
     if diff.weighted_routing:
-        return PlanPolicyRejection("WEIGHTED_ROUTING_ACTIVE", "The alias uses weighted routing; this policy only supports a full rollback.")
+        return PlanPolicyRejection(
+            "WEIGHTED_ROUTING_ACTIVE", "The alias uses weighted routing; this policy only supports a full rollback."
+        )
 
     if not diff.schema_compatible:
-        return PlanPolicyRejection("SCHEMA_INCOMPATIBLE", "The current and known-good versions use incompatible schemas.")
+        return PlanPolicyRejection(
+            "SCHEMA_INCOMPATIBLE", "The current and known-good versions use incompatible schemas."
+        )
 
     if not diff.processor_role_matches_manifest:
         return PlanPolicyRejection(
-            "ROLE_MISMATCH", "The processor execution role differs from the trusted manifest; this is an IAM change, out of scope."
+            "ROLE_MISMATCH",
+            "The processor execution role differs from the trusted manifest; this is an IAM change, out of scope.",
         )
 
     if not diff.changes:
         return PlanPolicyRejection(
-            "NO_CONFIG_EVIDENCE", "No allowlisted configuration field differs between the current and known-good versions."
+            "NO_CONFIG_EVIDENCE",
+            "No allowlisted configuration field differs between the current and known-good versions.",
         )
 
     if len(replay_request_ids) > MAX_REPLAY_REQUESTS:
-        return PlanPolicyRejection("TOO_MANY_REQUESTS", f"At most {MAX_REPLAY_REQUESTS} requests may be selected for replay.")
+        return PlanPolicyRejection(
+            "TOO_MANY_REQUESTS", f"At most {MAX_REPLAY_REQUESTS} requests may be selected for replay."
+        )
 
     plan = RecoveryPlan(
         plan_id=new_id("plan"),

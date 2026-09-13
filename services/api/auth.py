@@ -57,14 +57,10 @@ def _hash_token(raw: str) -> str:
 def assert_not_hosted() -> None:
     """Refuse to start local dev-auth in anything that looks hosted."""
     if os.environ.get("INCIDENTPILOT_HOSTED") == "1":
-        raise RuntimeError(
-            "local operator tokens are disabled in hosted deployments; configure Cognito instead"
-        )
+        raise RuntimeError("local operator tokens are disabled in hosted deployments; configure Cognito instead")
 
 
-def mint_operator_token(
-    store: ControlPlaneStore, settings: Settings, *, aws_identity_arn: str, actor_id: str
-) -> str:
+def mint_operator_token(store: ControlPlaneStore, settings: Settings, *, aws_identity_arn: str, actor_id: str) -> str:
     """Create one short-lived token. Returns the raw value exactly once."""
     assert_not_hosted()
     raw = secrets.token_urlsafe(32)

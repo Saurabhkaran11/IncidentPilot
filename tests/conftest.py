@@ -104,9 +104,7 @@ class World:
 
     def point_alias_at(self, version: str) -> str:
         """Move the alias without a revision check (owner-only fault injection)."""
-        state = self.gateway.force_set_alias(
-            self.app_config.function_name, self.app_config.alias_name, version
-        )
+        state = self.gateway.force_set_alias(self.app_config.function_name, self.app_config.alias_name, version)
         return state.alias_revision_id
 
     def inject_fault(self) -> str:
@@ -214,9 +212,7 @@ class World:
         self.store.update_incident(
             self.incident_id,
             incident.version,
-            lambda i: i.model_copy(
-                update={"state": state, "version": i.version + 1, "updated_at": datetime.now(UTC)}
-            ),
+            lambda i: i.model_copy(update={"state": state, "version": i.version + 1, "updated_at": datetime.now(UTC)}),
         )
 
     # -- investigation -------------------------------------------------
@@ -257,9 +253,7 @@ class World:
 
     # -- plan / approval / execution -----------------------------------
     def release_diff(self) -> dict:
-        response = evidence_tools.get_release_diff(
-            self.run_context(), self.store, self.gateway, self.incident_id
-        )
+        response = evidence_tools.get_release_diff(self.run_context(), self.store, self.gateway, self.incident_id)
         assert response["status"] == "ok", response
         return response["data"]
 
@@ -297,9 +291,7 @@ class World:
             diagnosis_evidence_ids=diagnosis.evidence_ids,
             diff=self.diff_snapshot(),
             known_good_entry=self.store.get_known_good_deployment(self.app_config.app_id),
-            replay_request_ids=[
-                (r, self.store.get_demo_request(r).payload_sha256) for r in selected
-            ],
+            replay_request_ids=[(r, self.store.get_demo_request(r).payload_sha256) for r in selected],
             now=now,
         )
 
@@ -371,9 +363,7 @@ class World:
 
     # -- assertions helpers --------------------------------------------
     def alias_version(self) -> str:
-        return self.gateway.get_alias_state(
-            self.app_config.function_name, self.app_config.alias_name
-        ).current_version
+        return self.gateway.get_alias_state(self.app_config.function_name, self.app_config.alias_name).current_version
 
     def needs_attention_codes(self) -> list[str]:
         page = self.store.list_events(self.incident_id, after_sequence=0, limit=200)
@@ -382,15 +372,11 @@ class World:
     def result_row_count(self, request_id: str) -> int:
         """Count durable result rows across every simulated results table."""
         with sqlite3.connect(self.data_dir / "fixture_aws.db") as conn:
-            return conn.execute(
-                "SELECT COUNT(*) FROM results_table WHERE request_id=?", (request_id,)
-            ).fetchone()[0]
+            return conn.execute("SELECT COUNT(*) FROM results_table WHERE request_id=?", (request_id,)).fetchone()[0]
 
     def log_line(self, message: str, *, error_type: str = "ResultsTableUnavailable") -> None:
         """Append an attacker-controlled CloudWatch line (the gateway's own writer)."""
-        self.gateway._log(
-            self.app_config.function_name, request_id=None, error_type=error_type, message=message
-        )
+        self.gateway._log(self.app_config.function_name, request_id=None, error_type=error_type, message=message)
 
 
 @pytest.fixture

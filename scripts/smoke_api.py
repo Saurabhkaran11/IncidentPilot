@@ -70,7 +70,10 @@ def _run(client, data_dir: Path) -> int:
     log(f"created demo run {run_id}")
 
     # Idempotency: same key + same body replays, different body conflicts.
-    assert client.post("/v1/demo/runs", json={"app_id": "document-demo"}, headers=key("run")).json()["demo_run_id"] == run_id
+    assert (
+        client.post("/v1/demo/runs", json={"app_id": "document-demo"}, headers=key("run")).json()["demo_run_id"]
+        == run_id
+    )
     conflict = client.post("/v1/demo/runs", json={"app_id": "other-app"}, headers=key("run"))
     assert conflict.status_code == 409, conflict.text
     assert conflict.json()["error"]["code"] == "IDEMPOTENCY_CONFLICT"
@@ -83,7 +86,10 @@ def _run(client, data_dir: Path) -> int:
 
     request_ids = []
     for i, fixture_id in enumerate(["invoice-example-a", "invoice-example-b", "invoice-example-c"]):
-        body = {"demo_run_id": run_id, "document": {"fixture_id": fixture_id, "document_type": "invoice", "page_count": 2}}
+        body = {
+            "demo_run_id": run_id,
+            "document": {"fixture_id": fixture_id, "document_type": "invoice", "page_count": 2},
+        }
         resp = client.post("/v1/demo/requests", json=body, headers=key(f"req{i}"))
         assert resp.status_code == 202, resp.text
         request_ids.append(resp.json()["request_id"])
@@ -92,7 +98,11 @@ def _run(client, data_dir: Path) -> int:
     # Unknown fields must be rejected, not silently ignored.
     bad = client.post(
         "/v1/demo/requests",
-        json={"demo_run_id": run_id, "document": {"fixture_id": "invoice-example-a", "document_type": "invoice", "page_count": 1}, "role_arn": "arn:aws:iam::1:role/x"},
+        json={
+            "demo_run_id": run_id,
+            "document": {"fixture_id": "invoice-example-a", "document_type": "invoice", "page_count": 1},
+            "role_arn": "arn:aws:iam::1:role/x",
+        },
         headers=key("bad"),
     )
     assert bad.status_code == 422, bad.text
@@ -124,8 +134,12 @@ def _run(client, data_dir: Path) -> int:
     # A tampered digest must be refused.
     tampered = client.post(
         f"/v1/incidents/{incident_id}/decisions",
-        json={"plan_id": plan_id, "plan_digest": "sha256:" + "0" * 64,
-              "expected_incident_version": incident["version"], "decision": "approve"},
+        json={
+            "plan_id": plan_id,
+            "plan_digest": "sha256:" + "0" * 64,
+            "expected_incident_version": incident["version"],
+            "decision": "approve",
+        },
         headers=key("tampered"),
     )
     assert tampered.status_code == 409 and tampered.json()["error"]["code"] == "PLAN_DIGEST_MISMATCH", tampered.text
@@ -134,8 +148,12 @@ def _run(client, data_dir: Path) -> int:
     # A stale incident version must be refused.
     stale = client.post(
         f"/v1/incidents/{incident_id}/decisions",
-        json={"plan_id": plan_id, "plan_digest": plan_resp["plan_digest"],
-              "expected_incident_version": 1, "decision": "approve"},
+        json={
+            "plan_id": plan_id,
+            "plan_digest": plan_resp["plan_digest"],
+            "expected_incident_version": 1,
+            "decision": "approve",
+        },
         headers=key("stale"),
     )
     assert stale.status_code == 409 and stale.json()["error"]["code"] == "STALE_INCIDENT_VERSION", stale.text
@@ -143,8 +161,12 @@ def _run(client, data_dir: Path) -> int:
 
     approve = client.post(
         f"/v1/incidents/{incident_id}/decisions",
-        json={"plan_id": plan_id, "plan_digest": plan_resp["plan_digest"],
-              "expected_incident_version": incident["version"], "decision": "approve"},
+        json={
+            "plan_id": plan_id,
+            "plan_digest": plan_resp["plan_digest"],
+            "expected_incident_version": incident["version"],
+            "decision": "approve",
+        },
         headers=key("approve"),
     )
     assert approve.status_code == 202, approve.text

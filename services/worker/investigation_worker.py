@@ -59,14 +59,24 @@ def run_investigation(
         logger.error("investigation %s: incident %s not found", operation_id, incident_id)
         return
 
-    store.update_operation(operation_id, lambda op: op.model_copy(update={
-        "status": OperationStatus.RUNNING, "started_at": datetime.now(UTC), "updated_at": datetime.now(UTC)
-    }))
-    store.append_event(incident_id, EventType.INVESTIGATION_STARTED.value, {"operation_id": operation_id, "agent_mode": agent_mode})
+    store.update_operation(
+        operation_id,
+        lambda op: op.model_copy(
+            update={"status": OperationStatus.RUNNING, "started_at": datetime.now(UTC), "updated_at": datetime.now(UTC)}
+        ),
+    )
+    store.append_event(
+        incident_id, EventType.INVESTIGATION_STARTED.value, {"operation_id": operation_id, "agent_mode": agent_mode}
+    )
 
     ctx = RunContext(
-        incident_id=incident_id, run_id=operation_id, app_id=incident.app_id,
-        demo_run_id=incident.demo_run_id, workspace_id=incident.workspace_id, mode=mode, data_dir=data_dir,
+        incident_id=incident_id,
+        run_id=operation_id,
+        app_id=incident.app_id,
+        demo_run_id=incident.demo_run_id,
+        workspace_id=incident.workspace_id,
+        mode=mode,
+        data_dir=data_dir,
     )
 
     try:
@@ -112,27 +122,45 @@ def run_investigation(
     )
     store.put_diagnosis(diagnosis)
     store.append_event(
-        incident_id, EventType.INVESTIGATION_COMPLETED.value,
+        incident_id,
+        EventType.INVESTIGATION_COMPLETED.value,
         {
-            "operation_id": operation_id, "assessment": diagnosis.assessment.value,
+            "operation_id": operation_id,
+            "assessment": diagnosis.assessment.value,
             "recommended_action": diagnosis.recommended_action.value,
-            "tool_call_count": tool_call_count, "duration_ms": duration_ms,
+            "tool_call_count": tool_call_count,
+            "duration_ms": duration_ms,
         },
     )
 
     plan_id = None
-    if diagnosis.assessment is Assessment.SUPPORTED and diagnosis.recommended_action is RecommendedAction.ROLLBACK_ALIAS:
+    if (
+        diagnosis.assessment is Assessment.SUPPORTED
+        and diagnosis.recommended_action is RecommendedAction.ROLLBACK_ALIAS
+    ):
         plan_id = _build_plan(store, gateway, ctx, incident_id, diagnosis)
 
     apply_transition(
-        store, incident_id,
+        store,
+        incident_id,
         IncidentState.AWAITING_APPROVAL if plan_id else IncidentState.NEEDS_INFORMATION,
     )
 
-    store.update_operation(operation_id, lambda op: op.model_copy(update={
-        "status": OperationStatus.SUCCEEDED, "finished_at": datetime.now(UTC), "updated_at": datetime.now(UTC),
-        "result": {"diagnosis_id": diagnosis.diagnosis_id, "assessment": diagnosis.assessment.value, "plan_id": plan_id},
-    }))
+    store.update_operation(
+        operation_id,
+        lambda op: op.model_copy(
+            update={
+                "status": OperationStatus.SUCCEEDED,
+                "finished_at": datetime.now(UTC),
+                "updated_at": datetime.now(UTC),
+                "result": {
+                    "diagnosis_id": diagnosis.diagnosis_id,
+                    "assessment": diagnosis.assessment.value,
+                    "plan_id": plan_id,
+                },
+            }
+        ),
+    )
 
 
 def _build_plan(
@@ -153,9 +181,13 @@ def _build_plan(
     app_config = store.get_app_config(incident.app_id)
     diff_resp = evidence_tools.get_release_diff(ctx, store, gateway, incident_id)
     if diff_resp["status"] == "error" or diff_resp["data"] is None:
-        store.append_event(incident_id, EventType.PLAN_INVALIDATED.value, {
-            "reason": "could not re-read deployment state while building the plan",
-        })
+        store.append_event(
+            incident_id,
+            EventType.PLAN_INVALIDATED.value,
+            {
+                "reason": "could not re-read deployment state while building the plan",
+            },
+        )
         return None
 
     d = diff_resp["data"]
@@ -171,34 +203,54 @@ def _build_plan(
         diagnosis_recommended_action=diagnosis.recommended_action,
         diagnosis_evidence_ids=diagnosis.evidence_ids,
         diff=ReleaseDiffSnapshot(
-            alias_name=d["alias_name"], current_version=d["current_version"],
-            known_good_version=d["known_good_version"], alias_revision_id=d["alias_revision_id"],
-            weighted_routing=d["weighted_routing"], schema_compatible=d["schema_compatible"],
-            changes=d["changes"], processor_role_matches_manifest=d["processor_role_matches_manifest"],
+            alias_name=d["alias_name"],
+            current_version=d["current_version"],
+            known_good_version=d["known_good_version"],
+            alias_revision_id=d["alias_revision_id"],
+            weighted_routing=d["weighted_routing"],
+            schema_compatible=d["schema_compatible"],
+            changes=d["changes"],
+            processor_role_matches_manifest=d["processor_role_matches_manifest"],
         ),
         known_good_entry=store.get_known_good_deployment(incident.app_id),
         replay_request_ids=replay_refs,
     )
     if isinstance(outcome, PlanPolicyRejection):
         logger.info("incident %s: plan policy refused (%s)", incident_id, outcome.reason_code)
-        store.append_event(incident_id, EventType.PLAN_INVALIDATED.value, {
-            "reason_code": outcome.reason_code, "message": outcome.message,
-        })
+        store.append_event(
+            incident_id,
+            EventType.PLAN_INVALIDATED.value,
+            {
+                "reason_code": outcome.reason_code,
+                "message": outcome.message,
+            },
+        )
         return None
 
     digest = compute_plan_digest(outcome)
     store.put_plan(outcome, canonical_bytes(outcome), digest)
-    store.append_event(incident_id, EventType.PLAN_CREATED.value, {
-        "plan_id": outcome.plan_id, "from_version": outcome.from_version,
-        "to_version": outcome.to_version, "replay_request_count": len(outcome.replay_requests),
-        "expires_at": outcome.expires_at.isoformat(),
-    })
+    store.append_event(
+        incident_id,
+        EventType.PLAN_CREATED.value,
+        {
+            "plan_id": outcome.plan_id,
+            "from_version": outcome.from_version,
+            "to_version": outcome.to_version,
+            "replay_request_count": len(outcome.replay_requests),
+            "expires_at": outcome.expires_at.isoformat(),
+        },
+    )
     current = store.get_incident(incident_id)
     store.update_incident(
-        incident_id, current.version,
-        lambda inc: inc.model_copy(update={
-            "active_plan_id": outcome.plan_id, "version": inc.version + 1, "updated_at": datetime.now(UTC),
-        }),
+        incident_id,
+        current.version,
+        lambda inc: inc.model_copy(
+            update={
+                "active_plan_id": outcome.plan_id,
+                "version": inc.version + 1,
+                "updated_at": datetime.now(UTC),
+            }
+        ),
     )
     return outcome.plan_id
 
@@ -216,9 +268,18 @@ def _run_bedrock(ctx: RunContext, incident_id: str):
 
 
 def _fail_to_needs_attention(store: ControlPlaneStore, incident_id: str, operation_id: str, message: str) -> None:
-    store.append_event(incident_id, EventType.INCIDENT_NEEDS_ATTENTION.value, {"reason": message, "operation_id": operation_id})
-    store.update_operation(operation_id, lambda op: op.model_copy(update={
-        "status": OperationStatus.NEEDS_ATTENTION, "finished_at": datetime.now(UTC),
-        "updated_at": datetime.now(UTC), "error": message,
-    }))
+    store.append_event(
+        incident_id, EventType.INCIDENT_NEEDS_ATTENTION.value, {"reason": message, "operation_id": operation_id}
+    )
+    store.update_operation(
+        operation_id,
+        lambda op: op.model_copy(
+            update={
+                "status": OperationStatus.NEEDS_ATTENTION,
+                "finished_at": datetime.now(UTC),
+                "updated_at": datetime.now(UTC),
+                "error": message,
+            }
+        ),
+    )
     apply_transition(store, incident_id, IncidentState.NEEDS_ATTENTION)

@@ -43,7 +43,10 @@ def test_the_same_request_id_with_a_different_payload_conflicts_without_overwrit
     result = world.gateway.invoke(
         world.app_config.function_name,
         world.app_config.alias_name,
-        {"request_id": request_id, "document": {"fixture_id": "tampered", "document_type": "invoice", "page_count": 9}},
+        {
+            "request_id": request_id,
+            "document": {"fixture_id": "tampered", "document_type": "invoice", "page_count": 9},
+        },
     )
 
     assert result.payload["conflict"] is True

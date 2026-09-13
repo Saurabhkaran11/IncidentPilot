@@ -40,7 +40,9 @@ class RunContext:
                 data_dir=os.environ.get("INCIDENTPILOT_DATA_DIR", "data"),
             )
         except KeyError as exc:
-            raise RunContextError(f"missing required env var {exc}; the MCP server must be spawned by services/worker") from exc
+            raise RunContextError(
+                f"missing required env var {exc}; the MCP server must be spawned by services/worker"
+            ) from exc
 
     def in_scope(self, incident_id: str) -> bool:
         return incident_id == self.incident_id

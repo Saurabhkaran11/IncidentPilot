@@ -24,12 +24,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from mcp_server.context import RunContext
 from packages.aws.gateway import AwsGateway
 from packages.domain.enums import McpErrorCode, SourceType
 from packages.domain.ids import new_id
 from packages.domain.models import Evidence
 from packages.storage.interface import ControlPlaneStore
-from mcp_server.context import RunContext
 
 SCHEMA_VERSION = "1.0"
 MAX_SUMMARY_CHARS = 2000
@@ -87,7 +87,9 @@ def _evidence_summary(ev: Evidence) -> dict[str, Any]:
     }
 
 
-def _ok(data: dict[str, Any], evidence: list[Evidence], *, truncated: bool = False, warnings: list[str] | None = None) -> dict[str, Any]:
+def _ok(
+    data: dict[str, Any], evidence: list[Evidence], *, truncated: bool = False, warnings: list[str] | None = None
+) -> dict[str, Any]:
     return {
         "schema_version": SCHEMA_VERSION,
         "status": "ok",
@@ -155,7 +157,8 @@ def get_incident_context(ctx: RunContext, store: ControlPlaneStore, incident_id:
         },
     }
     evidence = _store_evidence(
-        store, ctx,
+        store,
+        ctx,
         source_type=SourceType.DEPLOYMENT_MANIFEST,
         tool_name="get_incident_context",
         source_ref=f"deployment_manifest:{incident.app_id}",
@@ -205,7 +208,8 @@ def get_error_evidence(
 
     evidence_records = [
         _store_evidence(
-            store, ctx,
+            store,
+            ctx,
             source_type=SourceType.CLOUDWATCH_LOG,
             tool_name="get_error_evidence",
             source_ref=le.evidence_source_ref,
@@ -245,7 +249,9 @@ def get_error_evidence(
 # --------------------------------------------------------------------------
 
 
-def get_release_diff(ctx: RunContext, store: ControlPlaneStore, gateway: AwsGateway, incident_id: str) -> dict[str, Any]:
+def get_release_diff(
+    ctx: RunContext, store: ControlPlaneStore, gateway: AwsGateway, incident_id: str
+) -> dict[str, Any]:
     if not ctx.in_scope(incident_id):
         return _out_of_scope(incident_id)
 
@@ -280,11 +286,19 @@ def get_release_diff(ctx: RunContext, store: ControlPlaneStore, gateway: AwsGate
         if current_entry is not None:
             if current_entry.results_table_ref != known_good.results_table_ref:
                 changes.append(
-                    {"field": "RESULTS_TABLE", "before": known_good.results_table_ref, "after": current_entry.results_table_ref}
+                    {
+                        "field": "RESULTS_TABLE",
+                        "before": known_good.results_table_ref,
+                        "after": current_entry.results_table_ref,
+                    }
                 )
             if current_entry.schema_version_field != known_good.schema_version_field:
                 changes.append(
-                    {"field": "SCHEMA_VERSION", "before": known_good.schema_version_field, "after": current_entry.schema_version_field}
+                    {
+                        "field": "SCHEMA_VERSION",
+                        "before": known_good.schema_version_field,
+                        "after": current_entry.schema_version_field,
+                    }
                 )
                 schema_compatible = False
             processor_role_matches = current_entry.processor_role_fingerprint == known_good.processor_role_fingerprint
@@ -303,7 +317,8 @@ def get_release_diff(ctx: RunContext, store: ControlPlaneStore, gateway: AwsGate
         "processor_role_matches_manifest": processor_role_matches,
     }
     evidence = _store_evidence(
-        store, ctx,
+        store,
+        ctx,
         source_type=SourceType.LAMBDA_CONFIGURATION,
         tool_name="get_release_diff",
         source_ref=f"lambda_alias:{app_config.function_name}:{app_config.alias_name}",
@@ -358,7 +373,8 @@ def get_pending_request_summary(ctx: RunContext, store: ControlPlaneStore, incid
         "requests": out_requests,
     }
     evidence = _store_evidence(
-        store, ctx,
+        store,
+        ctx,
         source_type=SourceType.REQUEST_INBOX,
         tool_name="get_pending_request_summary",
         source_ref=f"request_inbox:{incident.demo_run_id}",
@@ -389,7 +405,8 @@ def get_runbook(ctx: RunContext, store: ControlPlaneStore, incident_id: str, run
         return _error(McpErrorCode.EVIDENCE_UNAVAILABLE, "runbook manifest missing")
 
     evidence = _store_evidence(
-        store, ctx,
+        store,
+        ctx,
         source_type=SourceType.RUNBOOK,
         tool_name="get_runbook",
         source_ref=f"runbook:{raw['runbook_id']}:{raw['version']}",

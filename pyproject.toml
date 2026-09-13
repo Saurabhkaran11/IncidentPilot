@@ -39,11 +39,16 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 
 [tool.ruff]
-line-length = 110
+line-length = 120
 target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# FastAPI's Depends()/Header()/Query() in parameter defaults is the
+# framework's intended idiom, not a mutable-default bug.
+"services/api/routes.py" = ["B008"]
 
 [tool.mypy]
 python_version = "3.12"

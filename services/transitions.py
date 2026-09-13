@@ -45,8 +45,12 @@ def apply_transition(store: ControlPlaneStore, incident_id: str, target: Inciden
     try:
         transition(incident.state, target)
     except IllegalTransition:
-        logger.error("incident %s: illegal transition %s -> %s; forcing needs_attention",
-                     incident_id, incident.state.value, target.value)
+        logger.error(
+            "incident %s: illegal transition %s -> %s; forcing needs_attention",
+            incident_id,
+            incident.state.value,
+            target.value,
+        )
         if incident.state == IncidentState.NEEDS_ATTENTION:
             return incident
         target = IncidentState.NEEDS_ATTENTION
@@ -55,9 +59,13 @@ def apply_transition(store: ControlPlaneStore, incident_id: str, target: Inciden
         return store.update_incident(
             incident_id,
             incident.version,
-            lambda inc: inc.model_copy(update={
-                "state": target, "version": inc.version + 1, "updated_at": datetime.now(UTC),
-            }),
+            lambda inc: inc.model_copy(
+                update={
+                    "state": target,
+                    "version": inc.version + 1,
+                    "updated_at": datetime.now(UTC),
+                }
+            ),
         )
     except ConcurrencyConflict:
         logger.warning("incident %s changed concurrently during transition to %s", incident_id, target.value)

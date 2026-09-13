@@ -125,24 +125,31 @@ class FixtureAwsGateway:
 
     def reset(self) -> None:
         self._conn().executescript(
-            "DELETE FROM alias_state; DELETE FROM deployment_version; "
-            "DELETE FROM results_table; DELETE FROM log_event;"
+            "DELETE FROM alias_state; DELETE FROM deployment_version; DELETE FROM results_table; DELETE FROM log_event;"
         )
 
     # ------------------------------------------------------------------
     # AwsGateway protocol
     # ------------------------------------------------------------------
     def get_alias_state(self, function_name: str, alias_name: str) -> AliasState:
-        row = self._conn().execute(
-            "SELECT * FROM alias_state WHERE function_name=? AND alias_name=?",
-            (function_name, alias_name),
-        ).fetchone()
+        row = (
+            self._conn()
+            .execute(
+                "SELECT * FROM alias_state WHERE function_name=? AND alias_name=?",
+                (function_name, alias_name),
+            )
+            .fetchone()
+        )
         if row is None:
             raise LookupError(f"no alias state for {function_name}:{alias_name}; run seed_fixture.py")
-        dep = self._conn().execute(
-            "SELECT * FROM deployment_version WHERE function_name=? AND version=?",
-            (function_name, row["current_version"]),
-        ).fetchone()
+        dep = (
+            self._conn()
+            .execute(
+                "SELECT * FROM deployment_version WHERE function_name=? AND version=?",
+                (function_name, row["current_version"]),
+            )
+            .fetchone()
+        )
         return AliasState(
             function_name=function_name,
             alias_name=alias_name,
@@ -164,10 +171,14 @@ class FixtureAwsGateway:
 
     def invoke(self, function_name: str, alias_name: str, payload: dict[str, Any]) -> InvokeResult:
         state = self.get_alias_state(function_name, alias_name)
-        dep = self._conn().execute(
-            "SELECT * FROM deployment_version WHERE function_name=? AND version=?",
-            (function_name, state.current_version),
-        ).fetchone()
+        dep = (
+            self._conn()
+            .execute(
+                "SELECT * FROM deployment_version WHERE function_name=? AND version=?",
+                (function_name, state.current_version),
+            )
+            .fetchone()
+        )
         table_ref = dep["results_table_ref"]
         can_access = bool(dep["can_access"])
         request_id = payload["request_id"]
@@ -201,10 +212,14 @@ class FixtureAwsGateway:
     def get_error_log_events(self, log_group_name: str, window_minutes: int, limit: int) -> list[LogEvent]:
         function_name = log_group_name.rsplit("/", 1)[-1]
         cutoff = datetime.now(UTC) - timedelta(minutes=window_minutes)
-        rows = self._conn().execute(
-            "SELECT * FROM log_event WHERE function_name=? AND ts>=? ORDER BY seq DESC LIMIT ?",
-            (function_name, cutoff.isoformat(), limit),
-        ).fetchall()
+        rows = (
+            self._conn()
+            .execute(
+                "SELECT * FROM log_event WHERE function_name=? AND ts>=? ORDER BY seq DESC LIMIT ?",
+                (function_name, cutoff.isoformat(), limit),
+            )
+            .fetchall()
+        )
         return [
             LogEvent(
                 evidence_source_ref=f"{log_group_name}#{r['seq']}",
@@ -217,9 +232,11 @@ class FixtureAwsGateway:
         ]
 
     def get_result(self, table_ref: str, request_id: str) -> ResultRecord | None:
-        row = self._conn().execute(
-            "SELECT * FROM results_table WHERE table_ref=? AND request_id=?", (table_ref, request_id)
-        ).fetchone()
+        row = (
+            self._conn()
+            .execute("SELECT * FROM results_table WHERE table_ref=? AND request_id=?", (table_ref, request_id))
+            .fetchone()
+        )
         if row is None:
             return None
         return ResultRecord(
@@ -231,12 +248,13 @@ class FixtureAwsGateway:
         )
 
     def _log(self, function_name: str, *, request_id: str | None, error_type: str, message: str) -> None:
-        seq = self._conn().execute(
-            "SELECT COALESCE(MAX(seq), 0) + 1 AS n FROM log_event WHERE function_name=?", (function_name,)
-        ).fetchone()["n"]
+        seq = (
+            self._conn()
+            .execute("SELECT COALESCE(MAX(seq), 0) + 1 AS n FROM log_event WHERE function_name=?", (function_name,))
+            .fetchone()["n"]
+        )
         self._conn().execute(
-            "INSERT INTO log_event(function_name, ts, request_id, error_type, message, seq) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO log_event(function_name, ts, request_id, error_type, message, seq) VALUES (?, ?, ?, ?, ?, ?)",
             (function_name, datetime.now(UTC).isoformat(), request_id, error_type, message, seq),
         )
 
@@ -287,16 +305,23 @@ class _FixtureResultsTable:
             )
             conn.execute("COMMIT")
             return processor.PutOutcome(
-                inserted=True, already_completed=False, conflict=False,
-                result_id=request_id, payload_sha256=payload_sha256,
+                inserted=True,
+                already_completed=False,
+                conflict=False,
+                result_id=request_id,
+                payload_sha256=payload_sha256,
             )
         except BaseException:
             conn.execute("ROLLBACK")
             raise
 
     def get(self, request_id: str) -> dict[str, Any] | None:
-        row = self._gw._conn().execute(
-            "SELECT * FROM results_table WHERE table_ref=? AND request_id=?",
-            (self._table_ref, request_id),
-        ).fetchone()
+        row = (
+            self._gw._conn()
+            .execute(
+                "SELECT * FROM results_table WHERE table_ref=? AND request_id=?",
+                (self._table_ref, request_id),
+            )
+            .fetchone()
+        )
         return dict(row) if row else None

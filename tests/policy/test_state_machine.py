@@ -36,6 +36,17 @@ BRIEF_EDGES = [
     (S.REPLAYING, S.NEEDS_ATTENTION),
 ]
 
+# Edges the implementation adds beyond the brief's one-line summary, each
+# required by a concrete code path rather than by the transition table.
+OPERATIONAL_EDGES = [
+    (S.NEEDS_INFORMATION, S.INVESTIGATING),
+    (S.INVESTIGATING, S.NEEDS_ATTENTION),
+    (S.AWAITING_APPROVAL, S.INVESTIGATING),
+    # Executor pre-mutation checks (expiry, digest) abort before ``applying``.
+    (S.AWAITING_APPROVAL, S.NEEDS_ATTENTION),
+    (S.APPLYING, S.NEEDS_ATTENTION),
+]
+
 ILLEGAL_EDGES = [
     (S.DETECTED, S.APPLYING),
     (S.DETECTED, S.RECOVERED),
@@ -52,6 +63,11 @@ ILLEGAL_EDGES = [
 
 @pytest.mark.parametrize(("current", "target"), BRIEF_EDGES, ids=lambda s: getattr(s, "value", s))
 def test_every_lifecycle_edge_from_the_brief_is_allowed(current, target):
+    assert transition(current, target) == target
+
+
+@pytest.mark.parametrize(("current", "target"), OPERATIONAL_EDGES, ids=lambda s: getattr(s, "value", s))
+def test_every_edge_a_real_code_path_needs_is_allowed(current, target):
     assert transition(current, target) == target
 
 

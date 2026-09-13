@@ -93,7 +93,9 @@ def _decide(
     diff_data = diff_resp.get("data") if diff_resp.get("status") != "error" else None
     error_events = (error_resp.get("data") or {}).get("events", []) if error_resp.get("status") != "error" else []
 
-    access_denied = any(e["error_type"] == "AccessDeniedException" or "AccessDenied" in e["message"] for e in error_events)
+    access_denied = any(
+        e["error_type"] == "AccessDeniedException" or "AccessDenied" in e["message"] for e in error_events
+    )
 
     # Scenario: no known-good version recorded at all -> cannot conclude anything.
     if diff_data is None or diff_data.get("known_good_version") is None:

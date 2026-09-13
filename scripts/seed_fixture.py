@@ -62,8 +62,10 @@ def seed(data_dir: Path) -> None:
     print(f"  known-good version = {good.version} -> {good.results_table_ref}")
     print(f"  faulty version     = {bad.version} -> {bad.results_table_ref} (access denied)")
     state = gateway.get_alias_state(app_config.function_name, app_config.alias_name)
-    print(f"  alias {state.alias_name!r} now points at version {state.current_version} "
-          f"(revision {state.alias_revision_id})")
+    print(
+        f"  alias {state.alias_name!r} now points at version {state.current_version} "
+        f"(revision {state.alias_revision_id})"
+    )
 
 
 def main() -> None:

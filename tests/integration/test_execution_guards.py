@@ -6,6 +6,7 @@ and no alias left in a state the approval did not authorize.
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime, timedelta
 
 from packages.domain.enums import IncidentState, OperationStatus, RequestStatus
@@ -44,13 +45,15 @@ def test_an_expired_plan_cannot_start_a_mutation(investigated_world):
     assert world.receipt() is None
 
 
-def test_an_approval_whose_digest_does_not_match_the_stored_plan_is_refused(investigated_world):
+def test_an_approval_whose_digest_does_not_match_the_stored_plan_is_refused(investigated_world, caplog):
     world = investigated_world
 
-    operation = world.approve_and_execute(world.plan(), digest="sha256:" + "0" * 64)
+    with caplog.at_level(logging.ERROR, logger="incidentpilot.transitions"):
+        operation = world.approve_and_execute(world.plan(), digest="sha256:" + "0" * 64)
 
     assert operation.status == OperationStatus.NEEDS_ATTENTION
     assert "PLAN_DIGEST_MISMATCH" in world.needs_attention_codes()
+    assert "illegal transition" not in caplog.text, "refusing execution is a modeled edge, not a fallback"
     assert world.alias_version() == world.bad_version
     assert world.receipt() is None
 
@@ -67,6 +70,4 @@ def test_a_failing_canary_after_the_rollback_never_claims_recovery(investigated_
     assert world.incident().state == IncidentState.NEEDS_ATTENTION
     assert world.alias_version() == world.good_version, "the approved rollback did apply"
     assert world.receipt() is None, "a failed health check must never produce a recovery receipt"
-    assert all(
-        world.store.get_demo_request(r).status == RequestStatus.FAILED for r in world.request_ids
-    )
+    assert all(world.store.get_demo_request(r).status == RequestStatus.FAILED for r in world.request_ids)

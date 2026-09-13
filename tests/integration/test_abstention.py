@@ -23,7 +23,7 @@ def test_access_denied_without_a_configuration_difference_is_insufficient_eviden
 
     assert diagnosis.assessment == Assessment.INSUFFICIENT_EVIDENCE
     assert diagnosis.recommended_action == RecommendedAction.NO_ACTION
-    assert diagnosis.unknowns, "the missing evidence must be named"
+    assert "corroborating" in " ".join(diagnosis.unknowns), "the missing evidence must be named"
     assert world.incident().state == IncidentState.NEEDS_INFORMATION
     assert isinstance(world.build_plan(), PlanPolicyRejection)
 

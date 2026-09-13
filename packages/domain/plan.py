@@ -117,9 +117,7 @@ def canonical_bytes(plan: RecoveryPlan) -> bytes:
     for field in _CANONICAL_FIELD_ORDER:
         value = getattr(plan, field)
         if field == "replay_requests":
-            ordered[field] = [
-                {"request_id": r.request_id, "payload_sha256": r.payload_sha256} for r in value
-            ]
+            ordered[field] = [{"request_id": r.request_id, "payload_sha256": r.payload_sha256} for r in value]
         elif field == "expires_at":
             ordered[field] = _iso(value)
         else:

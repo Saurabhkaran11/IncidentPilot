@@ -51,8 +51,13 @@ def drain_once(
 
     for op in store.list_operations_by_status(OperationKind.INVESTIGATION.value, OperationStatus.QUEUED.value, limit=5):
         run_investigation(
-            store, gateway, incident_id=op.incident_id, operation_id=op.operation_id,
-            mode=mode.value, data_dir=data_dir, agent_mode=agent_mode,
+            store,
+            gateway,
+            incident_id=op.incident_id,
+            operation_id=op.operation_id,
+            mode=mode.value,
+            data_dir=data_dir,
+            agent_mode=agent_mode,
         )
         handled += 1
 

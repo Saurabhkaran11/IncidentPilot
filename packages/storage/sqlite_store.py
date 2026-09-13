@@ -148,8 +148,7 @@ class SqliteControlPlaneStore(ControlPlaneStore):
 
     def put_app_config(self, config: AppConfig) -> None:
         self._conn().execute(
-            "INSERT INTO app_config(app_id, json) VALUES (?, ?) "
-            "ON CONFLICT(app_id) DO UPDATE SET json=excluded.json",
+            "INSERT INTO app_config(app_id, json) VALUES (?, ?) ON CONFLICT(app_id) DO UPDATE SET json=excluded.json",
             (config.app_id, config.model_dump_json()),
         )
 
@@ -161,15 +160,15 @@ class SqliteControlPlaneStore(ControlPlaneStore):
         )
 
     def get_deployment_version(self, app_id: str, version: str) -> DeploymentManifestEntry | None:
-        row = self._conn().execute(
-            "SELECT json FROM deployment_version WHERE app_id=? AND version=?", (app_id, version)
-        ).fetchone()
+        row = (
+            self._conn()
+            .execute("SELECT json FROM deployment_version WHERE app_id=? AND version=?", (app_id, version))
+            .fetchone()
+        )
         return DeploymentManifestEntry.model_validate_json(row["json"]) if row else None
 
     def get_known_good_deployment(self, app_id: str) -> DeploymentManifestEntry | None:
-        rows = self._conn().execute(
-            "SELECT json FROM deployment_version WHERE app_id=?", (app_id,)
-        ).fetchall()
+        rows = self._conn().execute("SELECT json FROM deployment_version WHERE app_id=?", (app_id,)).fetchall()
         for row in rows:
             entry = DeploymentManifestEntry.model_validate_json(row["json"])
             if entry.is_known_good:
@@ -184,17 +183,13 @@ class SqliteControlPlaneStore(ControlPlaneStore):
         )
 
     def get_demo_run(self, demo_run_id: str) -> DemoRun | None:
-        row = self._conn().execute(
-            "SELECT json FROM demo_run WHERE demo_run_id=?", (demo_run_id,)
-        ).fetchone()
+        row = self._conn().execute("SELECT json FROM demo_run WHERE demo_run_id=?", (demo_run_id,)).fetchone()
         return DemoRun.model_validate_json(row["json"]) if row else None
 
     def try_lock_run(self, demo_run_id: str, operation_id: str) -> bool:
         conn = self._tx()
         try:
-            row = conn.execute(
-                "SELECT lock_operation_id FROM demo_run WHERE demo_run_id=?", (demo_run_id,)
-            ).fetchone()
+            row = conn.execute("SELECT lock_operation_id FROM demo_run WHERE demo_run_id=?", (demo_run_id,)).fetchone()
             if row is None:
                 conn.execute("COMMIT")
                 return False
@@ -224,25 +219,21 @@ class SqliteControlPlaneStore(ControlPlaneStore):
         )
 
     def get_demo_request(self, request_id: str) -> DemoRequest | None:
-        row = self._conn().execute(
-            "SELECT json FROM demo_request WHERE request_id=?", (request_id,)
-        ).fetchone()
+        row = self._conn().execute("SELECT json FROM demo_request WHERE request_id=?", (request_id,)).fetchone()
         return DemoRequest.model_validate_json(row["json"]) if row else None
 
     def list_demo_requests(self, demo_run_id: str) -> list[DemoRequest]:
-        rows = self._conn().execute(
-            "SELECT json FROM demo_request WHERE demo_run_id=? ORDER BY rowid", (demo_run_id,)
-        ).fetchall()
+        rows = (
+            self._conn()
+            .execute("SELECT json FROM demo_request WHERE demo_run_id=? ORDER BY rowid", (demo_run_id,))
+            .fetchall()
+        )
         return [DemoRequest.model_validate_json(r["json"]) for r in rows]
 
-    def update_demo_request(
-        self, request_id: str, mutator: Callable[[DemoRequest], DemoRequest]
-    ) -> DemoRequest:
+    def update_demo_request(self, request_id: str, mutator: Callable[[DemoRequest], DemoRequest]) -> DemoRequest:
         conn = self._tx()
         try:
-            row = conn.execute(
-                "SELECT json FROM demo_request WHERE request_id=?", (request_id,)
-            ).fetchone()
+            row = conn.execute("SELECT json FROM demo_request WHERE request_id=?", (request_id,)).fetchone()
             if row is None:
                 conn.execute("ROLLBACK")
                 raise KeyError(request_id)
@@ -276,18 +267,20 @@ class SqliteControlPlaneStore(ControlPlaneStore):
         )
 
     def get_incident(self, incident_id: str) -> Incident | None:
-        row = self._conn().execute(
-            "SELECT json FROM incident WHERE incident_id=?", (incident_id,)
-        ).fetchone()
+        row = self._conn().execute("SELECT json FROM incident WHERE incident_id=?", (incident_id,)).fetchone()
         return Incident.model_validate_json(row["json"]) if row else None
 
     def find_active_incident(self, app_id: str, demo_run_id: str, fingerprint: str) -> Incident | None:
         from packages.domain.enums import TERMINAL_INCIDENT_STATES
 
-        rows = self._conn().execute(
-            "SELECT json FROM incident WHERE app_id=? AND demo_run_id=? AND fingerprint=?",
-            (app_id, demo_run_id, fingerprint),
-        ).fetchall()
+        rows = (
+            self._conn()
+            .execute(
+                "SELECT json FROM incident WHERE app_id=? AND demo_run_id=? AND fingerprint=?",
+                (app_id, demo_run_id, fingerprint),
+            )
+            .fetchall()
+        )
         terminal = {s.value for s in TERMINAL_INCIDENT_STATES}
         candidates = [Incident.model_validate_json(r["json"]) for r in rows]
         active = [c for c in candidates if c.state.value not in terminal]
@@ -299,9 +292,7 @@ class SqliteControlPlaneStore(ControlPlaneStore):
     ) -> Incident:
         conn = self._tx()
         try:
-            row = conn.execute(
-                "SELECT json, version FROM incident WHERE incident_id=?", (incident_id,)
-            ).fetchone()
+            row = conn.execute("SELECT json, version FROM incident WHERE incident_id=?", (incident_id,)).fetchone()
             if row is None:
                 conn.execute("ROLLBACK")
                 raise KeyError(incident_id)
@@ -333,10 +324,14 @@ class SqliteControlPlaneStore(ControlPlaneStore):
 
     def list_incidents(self, cursor: str | None, limit: int) -> IncidentPage:
         offset = int(cursor) if cursor else 0
-        rows = self._conn().execute(
-            "SELECT json FROM incident ORDER BY updated_at DESC LIMIT ? OFFSET ?",
-            (limit + 1, offset),
-        ).fetchall()
+        rows = (
+            self._conn()
+            .execute(
+                "SELECT json FROM incident ORDER BY updated_at DESC LIMIT ? OFFSET ?",
+                (limit + 1, offset),
+            )
+            .fetchall()
+        )
         items = [Incident.model_validate_json(r["json"]) for r in rows[:limit]]
         next_cursor = str(offset + limit) if len(rows) > limit else None
         return IncidentPage(items=items, next_cursor=next_cursor)
@@ -349,16 +344,18 @@ class SqliteControlPlaneStore(ControlPlaneStore):
         )
 
     def get_evidence(self, incident_id: str, evidence_id: str) -> Evidence | None:
-        row = self._conn().execute(
-            "SELECT json FROM evidence WHERE incident_id=? AND evidence_id=?",
-            (incident_id, evidence_id),
-        ).fetchone()
+        row = (
+            self._conn()
+            .execute(
+                "SELECT json FROM evidence WHERE incident_id=? AND evidence_id=?",
+                (incident_id, evidence_id),
+            )
+            .fetchone()
+        )
         return Evidence.model_validate_json(row["json"]) if row else None
 
     def list_evidence_for_run(self, run_id: str) -> list[Evidence]:
-        rows = self._conn().execute(
-            "SELECT json FROM evidence WHERE run_id=? ORDER BY rowid", (run_id,)
-        ).fetchall()
+        rows = self._conn().execute("SELECT json FROM evidence WHERE run_id=? ORDER BY rowid", (run_id,)).fetchall()
         return [Evidence.model_validate_json(r["json"]) for r in rows]
 
     def put_diagnosis(self, diagnosis: Diagnosis) -> None:
@@ -373,10 +370,14 @@ class SqliteControlPlaneStore(ControlPlaneStore):
         )
 
     def get_latest_diagnosis(self, incident_id: str) -> Diagnosis | None:
-        row = self._conn().execute(
-            "SELECT json FROM diagnosis WHERE incident_id=? ORDER BY created_at DESC LIMIT 1",
-            (incident_id,),
-        ).fetchone()
+        row = (
+            self._conn()
+            .execute(
+                "SELECT json FROM diagnosis WHERE incident_id=? ORDER BY created_at DESC LIMIT 1",
+                (incident_id,),
+            )
+            .fetchone()
+        )
         return Diagnosis.model_validate_json(row["json"]) if row else None
 
     # -- plans / approvals --
@@ -404,9 +405,7 @@ class SqliteControlPlaneStore(ControlPlaneStore):
             raise ConcurrencyConflict(f"plan {approval.plan_id} already has a decision") from exc
 
     def get_approval(self, approval_id: str) -> Approval | None:
-        row = self._conn().execute(
-            "SELECT json FROM approval WHERE approval_id=?", (approval_id,)
-        ).fetchone()
+        row = self._conn().execute("SELECT json FROM approval WHERE approval_id=?", (approval_id,)).fetchone()
         return Approval.model_validate_json(row["json"]) if row else None
 
     def get_approval_for_plan(self, plan_id: str) -> Approval | None:
@@ -427,17 +426,13 @@ class SqliteControlPlaneStore(ControlPlaneStore):
         )
 
     def get_operation(self, operation_id: str) -> Operation | None:
-        row = self._conn().execute(
-            "SELECT json FROM operation WHERE operation_id=?", (operation_id,)
-        ).fetchone()
+        row = self._conn().execute("SELECT json FROM operation WHERE operation_id=?", (operation_id,)).fetchone()
         return Operation.model_validate_json(row["json"]) if row else None
 
     def update_operation(self, operation_id: str, mutator: Callable[[Operation], Operation]) -> Operation:
         conn = self._tx()
         try:
-            row = conn.execute(
-                "SELECT json FROM operation WHERE operation_id=?", (operation_id,)
-            ).fetchone()
+            row = conn.execute("SELECT json FROM operation WHERE operation_id=?", (operation_id,)).fetchone()
             if row is None:
                 conn.execute("ROLLBACK")
                 raise KeyError(operation_id)
@@ -453,10 +448,14 @@ class SqliteControlPlaneStore(ControlPlaneStore):
             raise
 
     def list_operations_by_status(self, kind: str, status: str, limit: int) -> list[Operation]:
-        rows = self._conn().execute(
-            "SELECT json FROM operation WHERE kind=? AND status=? ORDER BY rowid LIMIT ?",
-            (kind, status, limit),
-        ).fetchall()
+        rows = (
+            self._conn()
+            .execute(
+                "SELECT json FROM operation WHERE kind=? AND status=? ORDER BY rowid LIMIT ?",
+                (kind, status, limit),
+            )
+            .fetchall()
+        )
         return [Operation.model_validate_json(r["json"]) for r in rows]
 
     def put_execution_record(self, record: ExecutionRecord) -> None:
@@ -473,9 +472,7 @@ class SqliteControlPlaneStore(ControlPlaneStore):
         )
 
     def get_execution_record(self, operation_id: str) -> ExecutionRecord | None:
-        row = self._conn().execute(
-            "SELECT json FROM execution_record WHERE operation_id=?", (operation_id,)
-        ).fetchone()
+        row = self._conn().execute("SELECT json FROM execution_record WHERE operation_id=?", (operation_id,)).fetchone()
         return ExecutionRecord.model_validate_json(row["json"]) if row else None
 
     def update_execution_record(
@@ -483,9 +480,7 @@ class SqliteControlPlaneStore(ControlPlaneStore):
     ) -> ExecutionRecord:
         conn = self._tx()
         try:
-            row = conn.execute(
-                "SELECT json FROM execution_record WHERE operation_id=?", (operation_id,)
-            ).fetchone()
+            row = conn.execute("SELECT json FROM execution_record WHERE operation_id=?", (operation_id,)).fetchone()
             if row is None:
                 conn.execute("ROLLBACK")
                 raise KeyError(operation_id)
@@ -513,17 +508,14 @@ class SqliteControlPlaneStore(ControlPlaneStore):
         conn = self._tx()
         try:
             row = conn.execute(
-                "SELECT lease_owner, lease_expires_at, lease_version, json "
-                "FROM execution_record WHERE operation_id=?",
+                "SELECT lease_owner, lease_expires_at, lease_version, json FROM execution_record WHERE operation_id=?",
                 (operation_id,),
             ).fetchone()
             if row is None:
                 conn.execute("ROLLBACK")
                 return False
             now = datetime.now(UTC)
-            expired = row["lease_expires_at"] is None or datetime.fromisoformat(
-                row["lease_expires_at"]
-            ) < now
+            expired = row["lease_expires_at"] is None or datetime.fromisoformat(row["lease_expires_at"]) < now
             if row["lease_owner"] not in (None, owner) and not expired:
                 conn.execute("ROLLBACK")
                 return False
@@ -560,10 +552,14 @@ class SqliteControlPlaneStore(ControlPlaneStore):
         )
 
     def get_latest_receipt(self, incident_id: str) -> Receipt | None:
-        row = self._conn().execute(
-            "SELECT json FROM receipt WHERE incident_id=? ORDER BY created_at DESC LIMIT 1",
-            (incident_id,),
-        ).fetchone()
+        row = (
+            self._conn()
+            .execute(
+                "SELECT json FROM receipt WHERE incident_id=? ORDER BY created_at DESC LIMIT 1",
+                (incident_id,),
+            )
+            .fetchone()
+        )
         return Receipt.model_validate_json(row["json"]) if row else None
 
     # -- events --
@@ -599,10 +595,14 @@ class SqliteControlPlaneStore(ControlPlaneStore):
             raise
 
     def list_events(self, incident_id: str, after_sequence: int, limit: int) -> EventPage:
-        rows = self._conn().execute(
-            "SELECT json FROM event WHERE incident_id=? AND sequence>? ORDER BY sequence LIMIT ?",
-            (incident_id, after_sequence, limit + 1),
-        ).fetchall()
+        rows = (
+            self._conn()
+            .execute(
+                "SELECT json FROM event WHERE incident_id=? AND sequence>? ORDER BY sequence LIMIT ?",
+                (incident_id, after_sequence, limit + 1),
+            )
+            .fetchall()
+        )
         items = [OutboxEvent.model_validate_json(r["json"]) for r in rows[:limit]]
         has_more = len(rows) > limit
         last_sequence = items[-1].sequence if items else after_sequence
@@ -610,9 +610,7 @@ class SqliteControlPlaneStore(ControlPlaneStore):
 
     # -- idempotency --
     def get_idempotency_record(self, scope_key: str) -> IdempotencyRecord | None:
-        row = self._conn().execute(
-            "SELECT * FROM idempotency WHERE scope_key=?", (scope_key,)
-        ).fetchone()
+        row = self._conn().execute("SELECT * FROM idempotency WHERE scope_key=?", (scope_key,)).fetchone()
         if row is None:
             return None
         return IdempotencyRecord(
@@ -641,10 +639,14 @@ class SqliteControlPlaneStore(ControlPlaneStore):
 
     # -- source events --
     def seen_source_event(self, source: str, source_event_id: str) -> str | None:
-        row = self._conn().execute(
-            "SELECT incident_id FROM source_event WHERE source=? AND source_event_id=?",
-            (source, source_event_id),
-        ).fetchone()
+        row = (
+            self._conn()
+            .execute(
+                "SELECT incident_id FROM source_event WHERE source=? AND source_event_id=?",
+                (source, source_event_id),
+            )
+            .fetchone()
+        )
         return row["incident_id"] if row else None
 
     def record_source_event(self, source: str, source_event_id: str, incident_id: str) -> None:
@@ -670,9 +672,7 @@ class SqliteControlPlaneStore(ControlPlaneStore):
         )
 
     def get_operator_token(self, token_hash: str) -> OperatorTokenRecord | None:
-        row = self._conn().execute(
-            "SELECT * FROM operator_token WHERE token_hash=?", (token_hash,)
-        ).fetchone()
+        row = self._conn().execute("SELECT * FROM operator_token WHERE token_hash=?", (token_hash,)).fetchone()
         if row is None:
             return None
         return OperatorTokenRecord(**{k: row[k] for k in row.keys()})

@@ -27,8 +27,19 @@ _TRANSITIONS: dict[IncidentState, frozenset[IncidentState]] = {
         {IncidentState.NEEDS_INFORMATION, IncidentState.AWAITING_APPROVAL, IncidentState.NEEDS_ATTENTION}
     ),
     IncidentState.NEEDS_INFORMATION: frozenset({IncidentState.INVESTIGATING}),
+    # ``needs_attention`` is reachable from ``awaiting_approval`` because the
+    # executor's pre-mutation checks (expiry, digest, authorization) run while
+    # the incident is still awaiting approval and abort *before* ``applying``
+    # -- build brief section 14's "Expired approval or changed plan digest ->
+    # Reject execution". Without this edge those normal outcomes were reached
+    # only through ``services/transitions``' illegal-transition fallback.
     IncidentState.AWAITING_APPROVAL: frozenset(
-        {IncidentState.REJECTED, IncidentState.APPLYING, IncidentState.INVESTIGATING}
+        {
+            IncidentState.REJECTED,
+            IncidentState.APPLYING,
+            IncidentState.INVESTIGATING,
+            IncidentState.NEEDS_ATTENTION,
+        }
     ),
     IncidentState.APPLYING: frozenset({IncidentState.VERIFYING, IncidentState.NEEDS_ATTENTION}),
     IncidentState.VERIFYING: frozenset(

@@ -153,8 +153,15 @@ def create_demo_run(
         max_requests=run.max_requests,
     ).model_dump(mode="json")
     idempotency.record(
-        store, key, principal, "POST", "/v1/demo/runs", payload,
-        resource_id=run.demo_run_id, response=response, status_code=201,
+        store,
+        key,
+        principal,
+        "POST",
+        "/v1/demo/runs",
+        payload,
+        resource_id=run.demo_run_id,
+        response=response,
+        status_code=201,
     )
     return JSONResponse(status_code=201, content=response)
 
@@ -221,8 +228,15 @@ def submit_demo_request(
         status_url=f"/v1/operations/{operation_id}",
     ).model_dump(mode="json")
     idempotency.record(
-        store, key, principal, "POST", "/v1/demo/requests", payload,
-        resource_id=request_id, response=response, status_code=202,
+        store,
+        key,
+        principal,
+        "POST",
+        "/v1/demo/requests",
+        payload,
+        resource_id=request_id,
+        response=response,
+        status_code=202,
     )
     return JSONResponse(status_code=202, content=response)
 
@@ -293,7 +307,8 @@ def open_incident(
         raise ApiError(ErrorCode.VALIDATION_ERROR, "request_ids do not belong to this demo run")
 
     incident_id, operation_id = open_or_attach_incident(
-        store, get_gateway(),
+        store,
+        get_gateway(),
         workspace_id=principal.workspace_id,
         app_id=body.app_id,
         demo_run_id=body.demo_run_id,
@@ -312,8 +327,15 @@ def open_incident(
         status_url=f"/v1/operations/{operation_id}" if operation_id else "",
     ).model_dump(mode="json")
     idempotency.record(
-        store, key, principal, "POST", "/v1/incidents", payload,
-        resource_id=incident_id, response=response, status_code=202,
+        store,
+        key,
+        principal,
+        "POST",
+        "/v1/incidents",
+        payload,
+        resource_id=incident_id,
+        response=response,
+        status_code=202,
     )
     return JSONResponse(status_code=202, content=response)
 
@@ -334,7 +356,9 @@ def start_investigation(
     """Queue a re-investigation. Invalidates any unexecuted plan."""
     key = idempotency.require_key(idempotency_key)
     payload = body.model_dump()
-    replay = idempotency.check_replay(store, key, principal, "POST", f"/v1/incidents/{incident_id}/investigations", payload)
+    replay = idempotency.check_replay(
+        store, key, principal, "POST", f"/v1/incidents/{incident_id}/investigations", payload
+    )
     if replay:
         return JSONResponse(status_code=replay.status_code, content=replay.body)
 
@@ -345,27 +369,49 @@ def start_investigation(
             "the incident changed since you loaded it",
             details={"current_version": incident.version},
         )
-    if incident.state in (IncidentState.INVESTIGATING, IncidentState.APPLYING, IncidentState.VERIFYING, IncidentState.REPLAYING):
+    if incident.state in (
+        IncidentState.INVESTIGATING,
+        IncidentState.APPLYING,
+        IncidentState.VERIFYING,
+        IncidentState.REPLAYING,
+    ):
         raise ApiError(ErrorCode.DECISION_CONFLICT, f"cannot re-investigate while {incident.state.value}")
 
     if incident.active_plan_id:
-        store.append_event(incident_id, EventType.PLAN_INVALIDATED.value, {
-            "plan_id": incident.active_plan_id, "reason": "a new investigation was requested",
-        })
+        store.append_event(
+            incident_id,
+            EventType.PLAN_INVALIDATED.value,
+            {
+                "plan_id": incident.active_plan_id,
+                "reason": "a new investigation was requested",
+            },
+        )
         store.update_incident(
-            incident_id, incident.version,
-            lambda inc: inc.model_copy(update={"active_plan_id": None, "version": inc.version + 1, "updated_at": datetime.now(UTC)}),
+            incident_id,
+            incident.version,
+            lambda inc: inc.model_copy(
+                update={"active_plan_id": None, "version": inc.version + 1, "updated_at": datetime.now(UTC)}
+            ),
         )
         incident = store.get_incident(incident_id)
 
     operation_id = queue_investigation(store, incident.incident_id)
     response = schemas.AcceptedResponse(
-        resource_id=incident_id, incident_id=incident_id, operation_id=operation_id,
+        resource_id=incident_id,
+        incident_id=incident_id,
+        operation_id=operation_id,
         status_url=f"/v1/operations/{operation_id}",
     ).model_dump(mode="json")
     idempotency.record(
-        store, key, principal, "POST", f"/v1/incidents/{incident_id}/investigations", payload,
-        resource_id=incident_id, response=response, status_code=202,
+        store,
+        key,
+        principal,
+        "POST",
+        f"/v1/incidents/{incident_id}/investigations",
+        payload,
+        resource_id=incident_id,
+        response=response,
+        status_code=202,
     )
     return JSONResponse(status_code=202, content=response)
 
@@ -383,8 +429,12 @@ def list_incidents(
     return schemas.IncidentListResponse(
         items=[
             schemas.IncidentListItem(
-                incident_id=i.incident_id, app_id=i.app_id, state=i.state, mode=i.mode,
-                failed_requests=i.impact.failed_requests, updated_at=_iso(i.updated_at),
+                incident_id=i.incident_id,
+                app_id=i.app_id,
+                state=i.state,
+                mode=i.mode,
+                failed_requests=i.impact.failed_requests,
+                updated_at=_iso(i.updated_at),
             )
             for i in visible
         ],
@@ -456,8 +506,11 @@ def list_events(
     return schemas.EventsResponse(
         items=[
             schemas.EventOut(
-                sequence=e.sequence, event_id=e.event_id, type=e.type,
-                occurred_at=_iso(e.occurred_at), data=e.data,
+                sequence=e.sequence,
+                event_id=e.event_id,
+                type=e.type,
+                occurred_at=_iso(e.occurred_at),
+                data=e.data,
             )
             for e in page.items
         ],
@@ -597,46 +650,68 @@ def decide(
     except ConcurrencyConflict as exc:
         raise ApiError(ErrorCode.DECISION_CONFLICT, "this plan already has a decision") from exc
 
-    store.append_event(incident_id, EventType.DECISION_RECORDED.value, {
-        "approval_id": approval.approval_id, "plan_id": plan.plan_id,
-        "decision": body.decision.value, "actor_id": principal.actor_id,
-    })
+    store.append_event(
+        incident_id,
+        EventType.DECISION_RECORDED.value,
+        {
+            "approval_id": approval.approval_id,
+            "plan_id": plan.plan_id,
+            "decision": body.decision.value,
+            "actor_id": principal.actor_id,
+        },
+    )
 
     if body.decision is Decision.REJECT:
         apply_transition(store, incident_id, IncidentState.REJECTED)
         response = schemas.RejectionResponse(
-            approval_id=approval.approval_id, incident_id=incident_id,
-            state=IncidentState.REJECTED, decision="reject",
+            approval_id=approval.approval_id,
+            incident_id=incident_id,
+            state=IncidentState.REJECTED,
+            decision="reject",
         ).model_dump(mode="json")
-        idempotency.record(store, key, principal, "POST", route, payload,
-                           resource_id=incident_id, response=response, status_code=200)
+        idempotency.record(
+            store, key, principal, "POST", route, payload, resource_id=incident_id, response=response, status_code=200
+        )
         return JSONResponse(status_code=200, content=response)
 
     operation_id = new_id("op")
     store.create_operation(
         Operation(
-            operation_id=operation_id, kind=OperationKind.EXECUTION, incident_id=incident_id,
-            status=OperationStatus.QUEUED, created_at=now, updated_at=now,
+            operation_id=operation_id,
+            kind=OperationKind.EXECUTION,
+            incident_id=incident_id,
+            status=OperationStatus.QUEUED,
+            created_at=now,
+            updated_at=now,
         )
     )
     store.put_execution_record(
         ExecutionRecord(
-            operation_id=operation_id, plan_id=plan.plan_id,
-            approval_id=approval.approval_id, incident_id=incident_id,
+            operation_id=operation_id,
+            plan_id=plan.plan_id,
+            approval_id=approval.approval_id,
+            incident_id=incident_id,
         )
     )
     current = store.get_incident(incident_id)
     store.update_incident(
-        incident_id, current.version,
-        lambda inc: inc.model_copy(update={"active_operation_id": operation_id, "version": inc.version + 1, "updated_at": now}),
+        incident_id,
+        current.version,
+        lambda inc: inc.model_copy(
+            update={"active_operation_id": operation_id, "version": inc.version + 1, "updated_at": now}
+        ),
     )
 
     response = schemas.AcceptedResponse(
-        resource_id=incident_id, incident_id=incident_id, approval_id=approval.approval_id,
-        operation_id=operation_id, status_url=f"/v1/operations/{operation_id}",
+        resource_id=incident_id,
+        incident_id=incident_id,
+        approval_id=approval.approval_id,
+        operation_id=operation_id,
+        status_url=f"/v1/operations/{operation_id}",
     ).model_dump(mode="json")
-    idempotency.record(store, key, principal, "POST", route, payload,
-                       resource_id=incident_id, response=response, status_code=202)
+    idempotency.record(
+        store, key, principal, "POST", route, payload, resource_id=incident_id, response=response, status_code=202
+    )
     return JSONResponse(status_code=202, content=response)
 
 
