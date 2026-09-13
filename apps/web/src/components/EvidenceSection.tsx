@@ -134,38 +134,75 @@ function EvidenceBody({ evidence }: { evidence: Evidence }): ReactNode {
   }
 }
 
-function EvidenceCard({ evidence }: { evidence: Evidence }) {
+function Provenance({ evidence }: { evidence: Evidence }) {
+  return (
+    <dl className="evidence-facts" style={{ marginTop: 8 }}>
+      <dt>Source</dt>
+      <dd>{evidence.source_ref}</dd>
+      <dt>Observed at</dt>
+      <dd>{formatDateTime(evidence.observed_at)}</dd>
+      <dt>Snapshot</dt>
+      <dd title={evidence.payload_sha256}>
+        {evidence.evidence_id} · sha256 {shortHash(evidence.payload_sha256)}
+      </dd>
+    </dl>
+  );
+}
+
+/**
+ * One card per evidence source. A source that produced several snapshots (the
+ * log tool returns one per failed invocation) shows the first in full and
+ * folds the rest away, so the section reads as four kinds of evidence rather
+ * than a wall of near-identical excerpts.
+ */
+function EvidenceCard({ group }: { group: Evidence[] }) {
+  const [primary, ...rest] = group;
   return (
     <article className="evidence-card">
       <header>
-        <h4>{sourceLabel(evidence.source_type)}</h4>
+        <h4>
+          {sourceLabel(primary.source_type)}
+          {rest.length > 0 && <span className="state-blurb"> · {group.length} snapshots</span>}
+        </h4>
         <span className="observed-tag">Observed</span>
       </header>
-      <EvidenceBody evidence={evidence} />
-      <dl className="evidence-facts" style={{ marginTop: 8 }}>
-        <dt>Source</dt>
-        <dd>{evidence.source_ref}</dd>
-        <dt>Observed at</dt>
-        <dd>{formatDateTime(evidence.observed_at)}</dd>
-        <dt>Snapshot</dt>
-        <dd title={evidence.payload_sha256}>
-          {evidence.evidence_id} · sha256 {shortHash(evidence.payload_sha256)}
-        </dd>
-      </dl>
-      {evidence.truncated && <p className="state-blurb">This snapshot was truncated when stored.</p>}
-      {evidence.warnings.length > 0 && (
-        <ul className="plain">
-          {evidence.warnings.map((warning) => (
-            <li key={warning}>{warning}</li>
-          ))}
-        </ul>
-      )}
+      <EvidenceBody evidence={primary} />
+      <Provenance evidence={primary} />
+      {primary.truncated && <p className="state-blurb">This snapshot was truncated when stored.</p>}
+      {primary.warnings.map((warning) => (
+        <p className="state-blurb" key={warning}>
+          {warning}
+        </p>
+      ))}
       <details className="raw">
         <summary>Stored snapshot (JSON)</summary>
-        <pre>{JSON.stringify(evidence.payload, null, 2)}</pre>
+        <pre>{JSON.stringify(primary.payload, null, 2)}</pre>
       </details>
+      {rest.length > 0 && (
+        <details className="raw">
+          <summary>{rest.length} further snapshot(s) from this source</summary>
+          <pre>
+            {rest
+              .map((item) => `${item.evidence_id}  ${item.observed_at}  ${item.source_ref}`)
+              .join('\n')}
+          </pre>
+        </details>
+      )}
     </article>
   );
+}
+
+/** Groups resolved snapshots by source type, preserving first-seen order. */
+function groupBySource(evidenceIds: string[], slots: Record<string, Slot>): Evidence[][] {
+  const groups = new Map<string, Evidence[]>();
+  for (const id of evidenceIds) {
+    const slot = slots[id];
+    if (slot?.status !== 'ok') continue;
+    const bucket = groups.get(slot.evidence.source_type);
+    if (bucket) bucket.push(slot.evidence);
+    else groups.set(slot.evidence.source_type, [slot.evidence]);
+  }
+  return [...groups.values()];
 }
 
 /**
@@ -226,17 +263,14 @@ export function EvidenceSection({
 
             <div className="field-label">Stored source snapshots</div>
             <div className="evidence-grid">
-              {diagnosis.evidence_ids.map((id) => {
-                const slot = slots[id];
-                if (!slot || slot.status === 'loading') {
-                  return (
-                    <div className="evidence-card" key={id} aria-busy="true">
-                      <div className="skeleton" style={{ width: '40%' }} />
-                      <div className="skeleton" />
-                    </div>
-                  );
-                }
-                if (slot.status === 'error') {
+              {groupBySource(diagnosis.evidence_ids, slots).map((group) => (
+                <EvidenceCard group={group} key={group[0].evidence_id} />
+              ))}
+
+              {diagnosis.evidence_ids
+                .filter((id) => slots[id]?.status === 'error')
+                .map((id) => {
+                  const slot = slots[id] as Extract<Slot, { status: 'error' }>;
                   return (
                     <article className="evidence-card unavailable" key={id}>
                       <header>
@@ -249,9 +283,14 @@ export function EvidenceSection({
                       </button>
                     </article>
                   );
-                }
-                return <EvidenceCard evidence={slot.evidence} key={id} />;
-              })}
+                })}
+
+              {diagnosis.evidence_ids.some((id) => !slots[id] || slots[id].status === 'loading') && (
+                <div className="evidence-card" aria-busy="true" aria-label="Loading stored snapshots">
+                  <div className="skeleton" style={{ width: '40%' }} />
+                  <div className="skeleton" />
+                </div>
+              )}
             </div>
           </>
         )}

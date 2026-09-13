@@ -133,8 +133,15 @@ export function useIncidentStream(incidentId: string | null): IncidentStreamStat
       setIncident(next);
       const page = await api.listEvents(incidentId, lastSequence.current);
       if (page.items.length) {
-        lastSequence.current = page.last_sequence;
-        setEvents((previous) => [...previous, ...page.items]);
+        lastSequence.current = Math.max(lastSequence.current, page.last_sequence);
+        // Two overlapping fetches (a manual reload racing the poll, or React's
+        // double-invoked effects in development) can both start from the same
+        // cursor, so the merge dedupes rather than trusting the cursor alone.
+        setEvents((previous) => {
+          const seen = new Set(previous.map((event) => event.event_id));
+          const additions = page.items.filter((event) => !seen.has(event.event_id));
+          return additions.length ? [...previous, ...additions] : previous;
+        });
       }
       setError(null);
     } catch (caught) {

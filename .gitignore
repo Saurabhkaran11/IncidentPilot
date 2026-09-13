@@ -40,3 +40,4 @@ data/
 data_*/
 infra/node_modules/
 infra/cdk.out/
+evals/results/*.json
