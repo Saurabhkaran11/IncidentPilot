@@ -94,6 +94,7 @@ class OperationStatus(StrEnum):
 
 
 class OperationKind(StrEnum):
+    PROCESSING = "processing"  # dispatch one demo request through the alias
     INVESTIGATION = "investigation"
     EXECUTION = "execution"
 

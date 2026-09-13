@@ -36,3 +36,5 @@ htmlcov/
 Thumbs.db
 .vscode/
 .idea/
+data_smoke/
+data_smoke*/
