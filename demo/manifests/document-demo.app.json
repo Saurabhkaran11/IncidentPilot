@@ -1,0 +1,15 @@
+{
+  "app_id": "document-demo",
+  "workspace_id": "workspace_demo",
+  "label": "Document request processor",
+  "region": "us-east-1",
+  "account_id": "000000000000",
+  "function_name": "incidentpilot-demo-processor",
+  "alias_name": "live",
+  "log_group_name": "/aws/lambda/incidentpilot-demo-processor",
+  "expected_results_table_ref": "incidentpilot-demo-results",
+  "forbidden_results_table_ref": "incidentpilot-demo-results-quarantine",
+  "processor_role_fingerprint": "d4263bb08bf071b50e3ffbe9ff26623e11d94a8d3ed84863773d3e23a53b7725",
+  "runbook_id": "document-alias-rollback-v1",
+  "schema_version": "1.0"
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "app_id": "document-demo",
+    "version": "6",
+    "results_table_ref": "incidentpilot-demo-results",
+    "schema_version_field": "1.0",
+    "config_fingerprint": "77a415b1fbf0606181aa7829a73ccf518af91f5a48fc9d4420b2990765a9c655",
+    "is_known_good": true,
+    "published_at": "2026-09-13T00:00:00Z",
+    "canary_passed": true,
+    "canary_verified_at": "2026-09-13T00:00:05Z",
+    "processor_role_fingerprint": "d4263bb08bf071b50e3ffbe9ff26623e11d94a8d3ed84863773d3e23a53b7725"
+  },
+  {
+    "app_id": "document-demo",
+    "version": "7",
+    "results_table_ref": "incidentpilot-demo-results-quarantine",
+    "schema_version_field": "1.0",
+    "config_fingerprint": "0bed24b76df819875a8934edf82ff9805cc1f492322c98f5f11de5dc694b2a13",
+    "is_known_good": false,
+    "published_at": "2026-09-13T00:05:00Z",
+    "canary_passed": false,
+    "canary_verified_at": null,
+    "processor_role_fingerprint": "d4263bb08bf071b50e3ffbe9ff26623e11d94a8d3ed84863773d3e23a53b7725"
+  }
+]

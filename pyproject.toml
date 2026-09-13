@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "incidentpilot"
+version = "0.1.0"
+description = "Investigate a failed AWS request-processing workflow, approve a bounded Lambda alias rollback, and prove recovery with a receipt."
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "uvicorn[standard]>=0.32,<1",
+  "pydantic>=2.9,<3",
+  "httpx>=0.27,<1",
+  "boto3>=1.35,<2",
+  "python-dateutil>=2.9,<3",
+  "strands-agents>=1.55.1,<2",
+  "mcp>=1.23.0,<2.2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<9",
+  "pytest-asyncio>=0.24,<1",
+  "ruff>=0.7,<1",
+  "mypy>=1.13,<2",
+  "freezegun>=1.5,<2",
+  "moto[dynamodb]>=5.0,<6",
+]
+
+[tool.setuptools.packages.find]
+include = ["packages*", "services*", "agent*", "mcp_server*", "demo*"]
+exclude = ["tests*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true

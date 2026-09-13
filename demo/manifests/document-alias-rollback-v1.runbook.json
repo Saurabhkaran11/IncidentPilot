@@ -1,0 +1,37 @@
+{
+  "runbook_id": "document-alias-rollback-v1",
+  "version": "1.0",
+  "content_sha256": "6241c65b2d4f4f348b4fca84acd280e2929057faf303bacfaedf5ab7044a86e6",
+  "title": "Roll back the document processor alias to its known-good version",
+  "eligibility_checks": [
+    "A recorded known-good version exists with a verified passing canary.",
+    "The current alias version is not already the known-good version.",
+    "The alias uses unweighted routing.",
+    "Fresh evidence shows a configuration mismatch on an allowlisted field (RESULTS_TABLE or SCHEMA_VERSION).",
+    "The processor execution role fingerprint matches the trusted deployment manifest for both versions."
+  ],
+  "contraindications": [
+    "AccessDenied evidence alone, with no corroborating deployment/config diff, is insufficient -- request more evidence instead.",
+    "No known-good version is recorded, or its canary never passed.",
+    "The alias already points at the known-good version.",
+    "Weighted/linear routing is active on the alias.",
+    "The execution role differs between the current and known-good versions -- this is an IAM change, out of scope for this runbook."
+  ],
+  "verification_checks": [
+    "Synthetic canary invocation returns no function error.",
+    "The canary result record exists in the expected results table with the expected payload hash.",
+    "The invocation ExecutedVersion matches the approved target version.",
+    "Post-update alias configuration matches the approved version and remains unweighted."
+  ],
+  "steps": [
+    "Confirm the incident has a recorded known-good version with a passed canary (deployment_manifest.is_known_good and canary_passed).",
+    "Confirm the currently deployed alias version differs from the known-good version and is not itself the known-good version.",
+    "Confirm the alias uses unweighted routing (no canary/linear traffic shifting in progress).",
+    "Confirm the failing version differs from known-good on an allowlisted field (RESULTS_TABLE or SCHEMA_VERSION) via get_release_diff.",
+    "Confirm the processor execution role is unchanged between versions (processor_role_matches_manifest is true) -- this runbook only covers configuration rollback, not IAM changes.",
+    "If all checks pass, the eligible action is: point the alias back at the known-good version, preconditioned on the alias revision id observed during investigation.",
+    "After the alias update is applied, invoke a synthetic canary request and confirm its result record exists with the expected payload hash.",
+    "Re-read the alias configuration after the canary and confirm it still points at the approved version with unweighted routing.",
+    "Only after both checks pass may affected customer requests be considered eligible for replay; replay is a separate bounded, explicitly-approved step."
+  ]
+}
