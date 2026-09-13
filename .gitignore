@@ -36,5 +36,7 @@ htmlcov/
 Thumbs.db
 .vscode/
 .idea/
-data_smoke/
-data_smoke*/
+data/
+data_*/
+infra/node_modules/
+infra/cdk.out/

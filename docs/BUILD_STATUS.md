@@ -45,6 +45,8 @@ Both currently pass. `pytest -q` is **107 passed**.
 | Control API, all 15 contract endpoints | `services/api/` | `scripts/export_openapi.py` diffs generated OpenAPI vs the contract |
 | SQLite control-plane store | `packages/storage/sqlite_store.py` | exercised by every integration test |
 | Simulated AWS (alias, results tables, logs) | `packages/aws/fixture_gateway.py` | exercised by every integration test |
+| CDK stack + three scoped IAM roles | `infra/` | `cdk synth` clean; synthesized policies inspected (see below) |
+| Owner-only fault injection CLI | `scripts/inject_fault.py` | run both directions in fixture mode |
 
 ### Implemented but NOT exercised
 
@@ -58,11 +60,11 @@ against the real service. Do not describe them as working.
 | Strands consuming the MCP server over stdio | the five tools are tested in-process; the stdio round-trip through a real `MCPClient` has not been observed | a Bedrock-capable run, or a standalone MCP client smoke test |
 | Live-mode operator token minting | requires `sts:GetCallerIdentity` | credentials |
 | `demo/workload/processor.py:lambda_handler` | fixture mode calls `handle()` in-process; the AWS entrypoint wrapper itself is unrun | a deployed function |
+| `infra/` CDK stack | synthesizes, but `cdk deploy` has never run | an AWS account + `cdk bootstrap` |
+| `scripts/deploy_demo_workload.py` | needs a deployed function to publish versions against | the stack deployed |
 
 ### Not built
 
-- `infra/` — CDK app and explicit runtime IAM roles. **This is the largest
-  remaining P0 gap**; without it the live demo can't be provisioned reproducibly.
 - DynamoDB control-plane adapter (hosted-live state).
 - Frontend (`apps/web/`) — in progress at the time of writing.
 - AgentCore Runtime deployment, EventBridge intake, hosted UI/Cognito/SQS (all P1).
@@ -106,29 +108,29 @@ contract. Real published versions come from `publish-version` output.
 
 No secrets are needed in chat. The blocking setup, in order:
 
-1. **An AWS account and region**, and a decision on a spend limit. Nothing
-   here provisions billable resources yet.
+1. **An AWS account and region**, and a decision on a spend limit. Set a
+   budget alert first — a Budget is a notification, not a spending cap.
 2. **Local credentials** — `aws configure` (or SSO). Verify with
    `aws sts get-caller-identity`.
 3. **Bedrock model access** for the model ID in
    `agent/investigator.py:DEFAULT_MODEL_ID`, granted in that region. Set
    `INCIDENTPILOT_BEDROCK_MODEL_ID` to whatever is actually enabled.
-4. **`infra/` CDK app** — not yet written. It must create: the processor
-   Lambda with two published versions and an alias, the expected results
-   table, a second results table the processor role cannot access, the log
-   group, and **separate IAM roles** for investigator (read-only),
-   executor (`UpdateAlias` on one alias + invoke the canary), and processor.
-5. `scripts/deploy_demo_workload.py` — also not written; it must record the
-   real published version numbers into `demo/manifests/`.
+4. **Deploy the stack** — `cd infra && npm install && npx cdk bootstrap &&
+   npx cdk deploy`. Written and synthesizing; never deployed.
+5. **Publish the versions** — `python scripts/deploy_demo_workload.py
+   --region <region>`, which publishes G and B and writes their real
+   version numbers into `demo/manifests/`.
 
-Until 4 and 5 exist, `INCIDENTPILOT_MODE=aws_live` will start and
+Until 4 and 5 have run, `INCIDENTPILOT_MODE=aws_live` will start and
 authenticate but has no resources to act on.
 
 ---
 
 ## Next concrete step
 
-Write `infra/` (CDK, TypeScript) with the three separately-scoped runtime
-roles, then `scripts/deploy_demo_workload.py` to publish versions G and B
-and write their real numbers into `demo/manifests/`. That is the whole
-remaining distance to a live P0 demonstration.
+Everything needed for a live P0 run is now written. The remaining distance
+is an AWS account: `cdk deploy`, `deploy_demo_workload.py`, then
+`INCIDENTPILOT_MODE=aws_live` with `INCIDENTPILOT_AGENT_MODE=bedrock` and a
+Bedrock model grant. After that, the honest claims in this file change from
+"unexercised" to measured � and the evaluation numbers in `evals/` can be
+produced for the first time.

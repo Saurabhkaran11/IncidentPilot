@@ -1,0 +1,24 @@
+{
+  "name": "incidentpilot-infra",
+  "version": "0.1.0",
+  "private": true,
+  "bin": {
+    "incidentpilot": "bin/incidentpilot.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "synth": "cdk synth",
+    "diff": "cdk diff",
+    "deploy": "cdk deploy"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "aws-cdk": "^2.166.0",
+    "typescript": "~5.6.3"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.166.0",
+    "constructs": "^10.4.2",
+    "ts-node": "^10.9.2"
+  }
+}
