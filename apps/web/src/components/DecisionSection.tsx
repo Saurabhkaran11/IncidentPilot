@@ -105,6 +105,8 @@ export function DecisionSection({ incident, onChanged }: Props) {
   const remaining = expiresAt ? new Date(expiresAt).getTime() - now : 0;
   const expired = expiresAt !== null && remaining <= 0;
   const awaiting = incident.state === 'awaiting_approval';
+  /** The countdown only means something while a decision is still open. */
+  const counting = awaiting && !expired;
 
   return (
     <section className="section" aria-labelledby="decision-heading">
@@ -253,12 +255,18 @@ export function DecisionSection({ incident, onChanged }: Props) {
             )}
 
             <div className="field-label">Plan expiry</div>
-            <p className={`expiry${remaining < 60_000 ? ' urgent' : ''}`}>
-              <span aria-hidden="true">{expired ? '⏱' : '⏳'}</span>
-              <span>
-                {expired ? 'Expired' : `Expires in ${formatCountdown(plan.presentation.expires_at, now)}`}
-              </span>
-              <span className="state-blurb">({formatDateTime(plan.presentation.expires_at)})</span>
+            {/* The countdown only means something while a decision is still
+                open; once the plan is decided it is just a timestamp. */}
+            <p className={`expiry${counting && remaining < 60_000 ? ' urgent' : ''}`}>
+              <span aria-hidden="true">{counting ? '⏳' : '⏱'}</span>
+              {counting ? (
+                <>
+                  <span>Expires in {formatCountdown(plan.presentation.expires_at, now)}</span>
+                  <span className="state-blurb">({formatDateTime(plan.presentation.expires_at)})</span>
+                </>
+              ) : (
+                <span>Expiry {formatDateTime(plan.presentation.expires_at)}</span>
+              )}
             </p>
 
             {awaiting && expired && (

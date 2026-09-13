@@ -39,8 +39,11 @@ function usePoll(task: () => Promise<void>, enabled: boolean, intervalMs = BASE_
       timer = window.setTimeout(run, delay);
     };
 
+    // The initial fetch always runs, even in a background tab -- a hidden tab
+    // must stop the *repeat*, not leave the page permanently blank. Only
+    // `schedule` consults visibility.
     const run = async () => {
-      if (cancelled || document.visibilityState !== 'visible') return;
+      if (cancelled) return;
       try {
         await taskRef.current();
         delay = intervalMs;
