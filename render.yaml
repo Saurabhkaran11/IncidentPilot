@@ -1,0 +1,14 @@
+# Public walkthrough of the simulation. It needs no API keys and cannot reach AWS.
+services:
+  - type: web
+    name: incidentpilot-demo
+    runtime: python
+    plan: free
+    buildCommand: pip install . && cd apps/web && npm ci --include=dev && npm run build
+    startCommand: sh scripts/start_public_demo.sh
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: NODE_VERSION
+        value: "22"

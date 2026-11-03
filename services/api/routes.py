@@ -44,6 +44,9 @@ from packages.domain.plan import verify_plan_digest
 from packages.storage.interface import ConcurrencyConflict, ControlPlaneStore
 from services.api import idempotency, schemas
 from services.api.auth import Principal, authenticate
+
+#: The faulty release in demo/manifests. Used only by the public simulation.
+PUBLIC_DEMO_FAULTY_VERSION = "7"
 from services.api.config import Settings, get_gateway, get_settings, get_store
 from services.intake import open_or_attach_incident, queue_investigation
 from services.transitions import apply_transition
@@ -145,6 +148,10 @@ def create_demo_run(
         created_at=datetime.now(UTC),
     )
     store.create_demo_run(run)
+    if settings.public_demo:
+        # Visitors have no terminal, so each public run starts from the simulated fault.
+        app_config = store.get_app_config(body.app_id)
+        get_gateway().force_set_alias(app_config.function_name, app_config.alias_name, PUBLIC_DEMO_FAULTY_VERSION)
     response = schemas.CreateDemoRunResponse(
         demo_run_id=run.demo_run_id,
         app_id=run.app_id,

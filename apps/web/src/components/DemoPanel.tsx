@@ -12,6 +12,8 @@ const FIXTURES = ['invoice-example-a', 'invoice-example-b', 'invoice-example-c']
  * is an owner-only CLI action and has no HTTP route. A public visitor must not
  * be able to break the demo application.
  */
+const isLocal = ['127.0.0.1', 'localhost'].includes(window.location.hostname);
+
 export function DemoPanel({ capabilities, onSubmitted }: { capabilities: Capabilities; onSubmitted: () => void }) {
   const appId = capabilities.applications[0]?.app_id ?? 'document-demo';
   const [runId, setRunId] = useState<string | null>(null);
@@ -77,8 +79,12 @@ export function DemoPanel({ capabilities, onSubmitted }: { capabilities: Capabil
           2
         </span>
         <div className="body">
-          <p>Inject the fault from your terminal — there is no HTTP route for this.</p>
-          <code className="command">{`.venv/Scripts/python -c "from services.api.config import get_gateway,get_store; s,g=get_store(),get_gateway(); c=s.get_app_config('${appId}'); g.force_set_alias(c.function_name,c.alias_name,'7')"`}</code>
+          {isLocal ? (
+            <p>Inject the fault from your terminal — there is no HTTP route for this.</p>
+          ) : (
+            <p>The simulated fault is injected automatically when you create a run.</p>
+          )}
+          {isLocal && <code className="command">{`.venv/Scripts/python -c "from services.api.config import get_gateway,get_store; s,g=get_store(),get_gateway(); c=s.get_app_config('${appId}'); g.force_set_alias(c.function_name,c.alias_name,'7')"`}</code>}
         </div>
       </div>
 

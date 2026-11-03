@@ -82,23 +82,27 @@ the real Lambda deploys. It is labelled as simulated everywhere it surfaces:
 **[`docs/BUILD_STATUS.md`](docs/BUILD_STATUS.md) is the honest ledger** of
 what is implemented, tested, unexercised, and not built.
 
-The short version, as of 2026-09-13:
+- ✅ The full recovery flow works in simulation and is covered by automated
+  tests, weighted toward the refusals (abstention on weak evidence, stale plan,
+  expired approval, digest mismatch, failed canary, duplicate replay, partial
+  recovery).
+- ✅ The React workbench, all 15 API endpoints, and the CDK stack with its three
+  separately-scoped IAM roles are written. The CDK stack synthesizes.
+- ⚠️ **The LLM has never run.** Diagnoses come from a deterministic decision
+  table (`agent_mode: "stub"`), and the product says so. The Strands/Bedrock path
+  is written but unexercised.
+- ⚠️ `LiveAwsGateway` and `cdk deploy` have never run against a real AWS account.
 
-- ✅ The full recovery slice works offline and is covered by **107 tests**,
-  weighted toward the refusals (abstention on weak evidence, stale plan,
-  expired approval, digest mismatch, failed canary, duplicate replay,
-  partial recovery).
-- ✅ All **15** endpoints in the supplied API contract are implemented;
-  `scripts/export_openapi.py` generates the OpenAPI document from the
-  running app and diffs it against the contract.
-- ⚠️ **The LLM has never run.** No AWS credentials were available in the
-  build environment, so diagnoses currently come from a deterministic
-  decision table (`agent_mode: "stub"`) that implements the same policy. The
-  Strands/Bedrock path is written but unexercised, and the product reports
-  `stub` rather than implying otherwise.
-- ⚠️ `LiveAwsGateway` (boto3) is written and unexercised.
-- ❌ `infra/` (CDK + the three separately-scoped IAM roles) is **not yet
-  written** — the main gap between this and a live AWS demonstration.
+Running it for real needs an AWS account, not an API key from a visitor.
+
+## Public demo
+
+`render.yaml` deploys a public walkthrough of the simulation. Create a Blueprint
+on Render and select this repository. It needs no API keys.
+
+The public mode refuses to start unless it is using simulated AWS and the
+deterministic analyser, so visitors can't reach real infrastructure or a model.
+Without it, the API still accepts only local connections.
 
 ---
 

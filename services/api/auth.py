@@ -97,6 +97,10 @@ def authenticate(request: Request, store: ControlPlaneStore, settings: Settings)
     never from the request body (API contract: "Derive workspace and actor
     from verified identity and server configuration").
     """
+    if settings.public_demo:
+        # get_settings guarantees this is the simulation: visitors share a demo operator and nothing can reach AWS.
+        return Principal(actor_id="public-demo-visitor", workspace_id=settings.workspace_id, role="operator")
+
     if not _is_loopback(request):
         # Both local modes are loopback-only by construction. A non-loopback
         # caller means someone exposed this process; fail closed.

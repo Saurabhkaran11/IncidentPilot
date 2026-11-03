@@ -28,6 +28,8 @@ class Settings:
     #: loopback (API contract, "Shared conventions"). Hosted mode rejects it.
     dev_actor_id: str
     token_ttl_seconds: int = 30 * 60
+    #: Public walkthrough of the simulation. Fixture mode and the stub analyser only: see get_settings.
+    public_demo: bool = False
 
     @property
     def is_live(self) -> bool:
@@ -43,6 +45,10 @@ def get_settings() -> Settings:
     else:
         # Default honestly: only claim "bedrock" when someone configured it.
         agent_mode = AgentMode.STUB
+    public_demo = os.environ.get("INCIDENTPILOT_PUBLIC_DEMO") == "1"
+    if public_demo and (mode is not Mode.FIXTURE or agent_mode is not AgentMode.STUB):
+        # Public visitors can approve actions, so this must never be able to reach real AWS or a real model.
+        raise RuntimeError("INCIDENTPILOT_PUBLIC_DEMO only works with the fixture mode and the stub analyser")
     return Settings(
         mode=mode,
         agent_mode=agent_mode,
@@ -51,6 +57,7 @@ def get_settings() -> Settings:
         workspace_id=os.environ.get("INCIDENTPILOT_WORKSPACE_ID", "workspace_demo"),
         app_id=os.environ.get("INCIDENTPILOT_APP_ID", "document-demo"),
         dev_actor_id="local-dev-operator",
+        public_demo=public_demo,
     )
 
 

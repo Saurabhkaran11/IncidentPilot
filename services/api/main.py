@@ -16,14 +16,18 @@ from __future__ import annotations
 
 import logging
 import sys
+import time
 import uuid
+from collections import defaultdict, deque
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from packages.domain.enums import ErrorCode, Mode
 from packages.domain.errors import ApiError, ErrorDetail, ErrorEnvelope
@@ -32,6 +36,23 @@ from services.api.auth import mint_operator_token, verify_aws_identity
 from services.api.config import get_gateway, get_settings, get_store
 
 logger = logging.getLogger("incidentpilot.api")
+
+WEB_DIST = Path(__file__).resolve().parents[2] / "apps" / "web" / "dist"
+PUBLIC_POSTS_PER_MINUTE = 40
+_public_posts: dict[str, deque[float]] = defaultdict(deque)
+
+
+def _public_rate_limited(ip: str, now: float) -> bool:
+    # ponytail: per-process memory, which is enough for one demo instance. Use a shared store if it ever scales out.
+    if len(_public_posts) > 10_000:
+        _public_posts.clear()
+    hits = _public_posts[ip]
+    while hits and now - hits[0] >= 60:
+        hits.popleft()
+    if len(hits) >= PUBLIC_POSTS_PER_MINUTE:
+        return True
+    hits.append(now)
+    return False
 
 
 def _request_id(request: Request) -> str:
@@ -94,6 +115,20 @@ def create_app() -> FastAPI:
         allow_headers=["Authorization", "Content-Type", "Idempotency-Key"],
     )
 
+    if settings.public_demo:
+        @app.middleware("http")
+        async def _public_limit(request: Request, call_next):
+            if request.method == "POST":
+                # The proxy appends the real address last; anything before it can be forged by the client.
+                forwarded = [p.strip() for p in request.headers.get("x-forwarded-for", "").split(",") if p.strip()]
+                ip = forwarded[-1] if forwarded else (request.client.host if request.client else "unknown")
+                if _public_rate_limited(ip, time.monotonic()):
+                    envelope = ErrorEnvelope(error=ErrorDetail(
+                        code=ErrorCode.RATE_LIMITED, message="Too many actions. Wait a minute and try again.",
+                        retryable=True, request_id=_request_id(request)))
+                    return JSONResponse(status_code=429, content=envelope.model_dump(mode="json"))
+            return await call_next(request)
+
     @app.exception_handler(ApiError)
     async def _api_error_handler(request: Request, exc: ApiError) -> JSONResponse:
         envelope = exc.to_envelope(_request_id(request))
@@ -129,6 +164,9 @@ def create_app() -> FastAPI:
         return JSONResponse(status_code=500, content=envelope.model_dump(mode="json"))
 
     app.include_router(routes.router)
+
+    if settings.public_demo and WEB_DIST.is_dir():
+        app.mount("/", StaticFiles(directory=WEB_DIST, html=True), name="web")
 
     return app
 
